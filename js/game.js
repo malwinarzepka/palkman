@@ -76,23 +76,23 @@
     { x: 0, y: 0, w: 22, h: CANVAS_HEIGHT, name: 'Mur Zachodni' },
     { x: CANVAS_WIDTH - 22, y: 0, w: 22, h: CANVAS_HEIGHT, name: 'Mur Wschodni' },
 
-    // Aula A (Lewy górny róg kampusu)
-    { x: 130, y: 22, w: 16, h: 135 },
-    { x: 22, y: 157, w: 124, h: 16 },
+    // Aula A (Lewy górny róg kampusu - z szerokim wyjściem na korytarz i Patio)
+    { x: 154, y: 22, w: 16, h: 42 },
+    { x: 22, y: 154, w: 42, h: 16 },
 
-    // Biblioteka (Prawy górny róg kampusu)
-    { x: 654, y: 22, w: 16, h: 135 },
-    { x: 654, y: 157, w: 124, h: 16 },
+    // Biblioteka (Prawy górny róg kampusu - z szerokim wyjściem)
+    { x: 630, y: 22, w: 16, h: 42 },
+    { x: 736, y: 154, w: 42, h: 16 },
 
-    // Dziekanat (Lewy dolny róg kampusu)
-    { x: 22, y: 375, w: 124, h: 16 },
-    { x: 130, y: 375, w: 16, h: 143 },
+    // Dziekanat (Lewy dolny róg kampusu - z szerokim wyjściem)
+    { x: 22, y: 370, w: 42, h: 16 },
+    { x: 154, y: 476, w: 16, h: 42 },
 
-    // Lab Komputerowy (Prawy dolny róg kampusu)
-    { x: 654, y: 375, w: 124, h: 16 },
-    { x: 654, y: 375, w: 16, h: 143 },
+    // Lab Komputerowy (Prawy dolny róg kampusu - z szerokim wyjściem)
+    { x: 736, y: 370, w: 42, h: 16 },
+    { x: 630, y: 476, w: 16, h: 42 },
 
-    // Kolumny i murki korytarzowe
+    // Kolumny korytarzowe wokół Patio ALK
     { x: 245, y: 165, w: 22, h: 22 },
     { x: 533, y: 165, w: 22, h: 22 },
     { x: 245, y: 353, w: 22, h: 22 },
@@ -112,10 +112,10 @@
 
   // Strefy sal z etykietami na mapie
   const ROOMS = [
-    { name: 'Aula A', x: 76, y: 90, color: '#f2a900' },
-    { name: 'Biblioteka', x: 724, y: 90, color: '#ffc740' },
-    { name: 'Dziekanat', x: 76, y: 450, color: '#f2a900' },
-    { name: 'Lab Komputerowy', x: 724, y: 450, color: '#ffc740' },
+    { name: 'Aula A', x: 86, y: 90, boxX: 22, boxY: 22, boxW: 132, boxH: 132, color: '#f2a900' },
+    { name: 'Biblioteka', x: 714, y: 90, boxX: 646, boxY: 22, boxW: 132, boxH: 132, color: '#ffc740' },
+    { name: 'Dziekanat', x: 86, y: 450, boxX: 22, boxY: 386, boxW: 132, boxH: 132, color: '#f2a900' },
+    { name: 'Lab Komputerowy', x: 714, y: 450, boxX: 646, boxY: 386, boxW: 132, boxH: 132, color: '#ffc740' },
   ];
 
   // --- Stan gry ---
@@ -148,8 +148,8 @@
 
   // --- 2. Gracz (Student) ---
   const player = {
-    x: 76,
-    y: 90,
+    x: 86,
+    y: 95,
     radius: 12,
     baseSpeed: 3.2,
     sprintSpeed: 5.4,
@@ -160,8 +160,8 @@
 
   // --- 3. Przeciwnik (Egzaminator) ---
   const examiner = {
-    x: 724,
-    y: 450,
+    x: 714,
+    y: 445,
     radius: 13,
     baseSpeed: 2.15,
     currentSpeed: 2.15,
@@ -292,14 +292,14 @@
     quoteTimer = 0;
     particles = [];
 
-    // Reset pozycji studenta (Aula A)
-    player.x = 76;
-    player.y = 90;
+    // Reset pozycji studenta (Aula A - bezpośrednio przy otwartych wyjściach)
+    player.x = 86;
+    player.y = 95;
     player.facing = 'down';
 
     // Reset pozycji profesora (Lab Komputerowy)
-    examiner.x = 724;
-    examiner.y = 450;
+    examiner.x = 714;
+    examiner.y = 445;
     examiner.facing = 'left';
     examiner.currentSpeed = examiner.baseSpeed;
 
@@ -736,18 +736,32 @@
     ctx.font = '20px sans-serif';
     ctx.fillText('🦁', 400, 270);
 
-    // 3. Etykiety sal: „Aula A”, „Biblioteka”, „Dziekanat”, „Lab Komputerowy”
+    // 3. Strefy i etykiety sal: „Aula A”, „Biblioteka”, „Dziekanat”, „Lab Komputerowy”
     for (const room of ROOMS) {
+      // Podświetlenie posadzki sali
+      ctx.fillStyle = 'rgba(0, 75, 135, 0.16)';
+      ctx.fillRect(room.boxX, room.boxY, room.boxW, room.boxH);
+
+      // Przerywana linia progu oznaczająca otwarte przejścia do sali
+      ctx.save();
+      ctx.strokeStyle = 'rgba(242, 169, 0, 0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+      ctx.strokeRect(room.boxX, room.boxY, room.boxW, room.boxH);
+      ctx.restore();
+
+      // Tabliczka z nazwą sali
+      ctx.fillStyle = 'rgba(0, 34, 68, 0.85)';
+      ctx.fillRect(room.x - 52, room.y - 56, 104, 26);
+      ctx.strokeStyle = 'rgba(242, 169, 0, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(room.x - 52, room.y - 56, 104, 26);
+
       ctx.font = '700 12px "Space Grotesk", sans-serif';
       ctx.fillStyle = room.color;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(room.name, room.x, room.y - 42);
-
-      // Subtelny obrys strefy
-      ctx.strokeStyle = 'rgba(242, 169, 0, 0.25)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(room.x - 50, room.y - 56, 100, 28);
+      ctx.fillText(room.name, room.x, room.y - 43);
     }
 
     // 4. Ściany i aule z obramowaniami
