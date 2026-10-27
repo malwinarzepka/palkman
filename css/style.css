@@ -1,0 +1,939 @@
+/* ==========================================================================
+   Kozminski Escape: Polowanie na ECTS
+   Arkusz stylów CSS (Modern Retro-Arcade)
+   Oficjalna identyfikacja wizualna Akademii Leona Koźmińskiego (ALK)
+   ========================================================================== */
+
+:root {
+  /* Oficjalna paleta ALK */
+  --alk-navy-main: #002244;       /* Główny granat ALK */
+  --alk-navy-dark: #0a1128;       /* Ciemny granat tła */
+  --alk-gold: #f2a900;            /* Akcentowe złoto ALK */
+  --alk-gold-light: #ffc740;      /* Jasne złoto ALK */
+  --alk-blue: #004b87;            /* Kolor niebieski ALK */
+  
+  /* Kolory funkcyjne & Retro-Arcade */
+  --alk-green: #2e7d32;
+  --alk-green-light: #4ade80;
+  --alk-red: #d32f2f;
+  --alk-red-light: #f87171;
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  
+  /* Szkło i obramowania */
+  --glass-bg: rgba(0, 34, 68, 0.85);
+  --glass-border: 1px solid #f2a900;
+  --glass-shadow: 0 10px 25px rgba(0, 0, 0, 0.65), 0 0 18px rgba(242, 169, 0, 0.22);
+  
+  /* Typografia */
+  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* Reset i ustawienia ogólne */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--alk-navy-dark);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  
+  /* Klimatyczne gradientowe tło retro-arcade */
+  background-image: 
+    radial-gradient(circle at 50% 15%, rgba(0, 75, 135, 0.35) 0%, transparent 60%),
+    radial-gradient(circle at 85% 85%, rgba(242, 169, 0, 0.12) 0%, transparent 45%),
+    linear-gradient(180deg, var(--alk-navy-dark) 0%, #050b18 100%);
+  background-attachment: fixed;
+  
+  /* Centrowanie układu w oknie przeglądarki */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Główny kontener aplikacji */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 860px;
+  min-height: 100vh;
+  padding: 14px 16px;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   1. Szklany HUD z efektem backdrop-filter: blur() i złotą ramką
+   ========================================================================== */
+.hud-bar {
+  width: 100%;
+  max-width: 800px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: var(--glass-border);
+  border-radius: 14px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: var(--glass-shadow);
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 20;
+}
+
+/* Złoty akcent retro w narożniku HUD */
+.hud-bar::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 20px;
+  width: 40px;
+  height: 3px;
+  background: var(--alk-gold-light);
+  box-shadow: 0 0 10px var(--alk-gold);
+  border-radius: 2px;
+}
+
+.hud-branding {
+  display: flex;
+  align-items: center;
+}
+
+.alk-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 34, 68, 0.95);
+  border: 1px solid rgba(242, 169, 0, 0.45);
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.alk-icon {
+  font-size: 20px;
+  line-height: 1;
+  filter: drop-shadow(0 0 5px var(--alk-gold));
+}
+
+.alk-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.alk-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  color: var(--alk-gold);
+}
+
+.alk-campus {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 125px;
+  flex: 1;
+}
+
+.hud-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.hud-numeric {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--alk-gold-light);
+}
+
+/* Paski postępu */
+.progress-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(10, 17, 40, 0.85);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* Błyszcząca linia na paskach */
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 35%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, transparent 100%);
+  border-radius: 6px 6px 0 0;
+}
+
+/* Pasek ECTS: Złoty gradient z poświatą */
+.ects-fill {
+  background: linear-gradient(90deg, #d48b00 0%, var(--alk-gold) 60%, var(--alk-gold-light) 100%);
+  box-shadow: 0 0 10px rgba(242, 169, 0, 0.6);
+}
+
+/* 2. Pasek staminy z płynnym przejściem gradientowym */
+.stamina-fill {
+  background: linear-gradient(90deg, var(--alk-navy-main) 0%, var(--alk-blue) 45%, #00a3ff 85%, var(--alk-gold-light) 100%);
+  box-shadow: 0 0 10px rgba(0, 163, 255, 0.6);
+}
+
+.hud-status-wrapper {
+  max-width: 195px;
+}
+
+.hud-timer {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--alk-gold-light);
+}
+
+.hud-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(10, 17, 40, 0.75);
+  border: 1px solid rgba(242, 169, 0, 0.25);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--alk-green-light);
+  box-shadow: 0 0 6px var(--alk-green-light);
+  flex-shrink: 0;
+}
+
+.status-alert .status-dot {
+  background-color: var(--alk-red-light);
+  box-shadow: 0 0 8px var(--alk-red);
+  animation: pulse-dot 0.7s infinite alternate;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.4); opacity: 1; }
+}
+
+.hud-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.hud-icon-btn {
+  background: rgba(0, 34, 68, 0.7);
+  border: 1px solid rgba(242, 169, 0, 0.35);
+  color: var(--text-primary);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.hud-icon-btn:hover {
+  background: var(--alk-blue);
+  border-color: var(--alk-gold);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(242, 169, 0, 0.3);
+}
+
+/* ==========================================================================
+   2. Obszar Canvas & Komiksowy Dymek Profesora
+   ========================================================================== */
+.canvas-viewport {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  aspect-ratio: 800 / 540;
+  background: #020c18;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid var(--alk-gold);
+  box-shadow: 
+    0 18px 45px rgba(0, 0, 0, 0.8),
+    0 0 25px rgba(242, 169, 0, 0.25),
+    inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+canvas#gameCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  outline: none;
+  background-color: var(--alk-navy-dark);
+}
+
+/* Komiksowy dymek nad profesorem z animacją wyskakiwania i trójkątnym wskaźnikiem */
+.prof-speech-bubble {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 86%;
+  background: var(--alk-navy-main);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid var(--alk-gold);
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.75), 
+    0 0 14px rgba(242, 169, 0, 0.3);
+  pointer-events: none;
+  z-index: 15;
+  animation: popInComic 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Trójkątny wskaźnik komiksowy (tail/pointer) */
+.prof-speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -11px;
+  left: 38px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 11px solid var(--alk-gold);
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.5));
+}
+
+.prof-speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 40px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid var(--alk-navy-main);
+  z-index: 1;
+}
+
+/* Animacja wyskakiwania komiksowego */
+@keyframes popInComic {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -18px) scale(0.85);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, 3px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.prof-speech-bubble.bubble-hidden {
+  display: none !important;
+}
+
+.prof-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1.5px solid var(--alk-gold);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.prof-face {
+  font-size: 22px;
+}
+
+.prof-pen {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 14px;
+  filter: drop-shadow(0 0 5px #ef4444);
+}
+
+.prof-dialog-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.prof-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--alk-gold-light);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.prof-quote {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* ==========================================================================
+   3. Nowoczesne karty modalne ze złotymi przyciskami (hover/scale)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 17, 40, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+  animation: fadeInModal 0.25s ease-out;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-overlay.hidden {
+  display: none !important;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 620px;
+  background: linear-gradient(150deg, var(--alk-navy-main) 0%, #031427 100%);
+  border: 2px solid var(--alk-gold);
+  border-radius: 18px;
+  padding: 26px;
+  box-shadow: 
+    0 24px 60px rgba(0, 0, 0, 0.85), 
+    0 0 35px rgba(242, 169, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Złoty pasek nagłówka modala */
+.modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--alk-gold-light), transparent);
+  border-radius: 2px;
+}
+
+.modal-fail {
+  border-color: var(--alk-red);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(239, 68, 68, 0.3);
+}
+
+.modal-success {
+  border-color: var(--alk-gold-light);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(242, 169, 0, 0.35);
+}
+
+.modal-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.university-pill {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--alk-gold-light);
+  background: rgba(242, 169, 0, 0.12);
+  border: 1px solid rgba(242, 169, 0, 0.4);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 4px 14px;
+  border-radius: 20px;
+}
+
+.pill-fail {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.pill-success {
+  background: rgba(242, 169, 0, 0.2);
+  color: var(--alk-gold-light);
+  border: 1px solid var(--alk-gold);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+
+.modal-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.story-box {
+  background: rgba(10, 17, 40, 0.6);
+  border: 1px solid rgba(242, 169, 0, 0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+
+.legend-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-heading {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--alk-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.legend-items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 34, 68, 0.6);
+  border: 1px solid rgba(242, 169, 0, 0.2);
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.legend-icon {
+  font-size: 18px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 75, 135, 0.5);
+  border: 1px solid rgba(242, 169, 0, 0.35);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.legend-desc {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #e2e8f0;
+}
+
+.legend-desc strong {
+  color: #ffffff;
+}
+
+.legend-desc code {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--alk-gold-light);
+}
+
+.modal-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* Złote przyciski z efektem hover/scale */
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, var(--alk-gold) 0%, var(--alk-gold-light) 100%);
+  color: #00192e;
+  border: 1px solid #ffe17d;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(242, 169, 0, 0.4);
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.025);
+  box-shadow: 0 12px 28px rgba(242, 169, 0, 0.6), 0 0 15px rgba(255, 199, 64, 0.5);
+  background: linear-gradient(135deg, var(--alk-gold-light) 0%, #fff0a8 100%);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-retry {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  border-color: #f87171;
+  box-shadow: 0 8px 22px rgba(239, 68, 68, 0.4);
+}
+
+.btn-retry:hover {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.6);
+}
+
+.btn-win {
+  background: linear-gradient(135deg, var(--alk-gold) 0%, var(--alk-gold-light) 100%);
+  color: #00192e;
+  box-shadow: 0 8px 25px rgba(242, 169, 0, 0.45);
+}
+
+.controls-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Statystyki końcowe */
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.stat-box {
+  background: rgba(10, 17, 40, 0.7);
+  border: 1px solid rgba(242, 169, 0, 0.25);
+  border-radius: 10px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+}
+
+.stat-box.highlight {
+  border-color: var(--alk-gold);
+  background: rgba(242, 169, 0, 0.12);
+}
+
+.stat-number {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--alk-gold-light);
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.prof-catch-banner, .victory-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.prof-big-icon, .victory-big-icon {
+  font-size: 38px;
+}
+
+.fail-quote {
+  font-style: italic;
+  color: #fca5a5;
+  font-size: 13px;
+  line-height: 1.4;
+  border-left: 3px solid var(--alk-red);
+  padding-left: 12px;
+  text-align: left;
+}
+
+.victory-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+
+/* ==========================================================================
+   3. Responsywność & Wirtualne sterowanie dotykowe (#mobile-controls)
+   - Na desktopie (powyżej 768px): ukryte
+   - W widokach poniżej 768px: włączone wyświetlanie ekranowych przycisków
+   ========================================================================== */
+#mobile-controls,
+#touchControls,
+.touch-controls {
+  display: none; /* Domyślnie ukryte na komputerach stacjonarnych */
+  width: 100%;
+  max-width: 800px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding: 0 10px;
+  z-index: 25;
+}
+
+/* D-pad */
+.dpad-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.dpad-middle-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.dpad-center {
+  width: 46px;
+  height: 46px;
+  background: rgba(0, 34, 68, 0.4);
+  border-radius: 8px;
+}
+
+.dpad-btn {
+  width: 52px;
+  height: 52px;
+  background: var(--alk-navy-main);
+  border: 1.5px solid var(--alk-gold);
+  border-radius: 12px;
+  color: var(--alk-gold-light);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+  touch-action: none;
+  transition: all 0.12s ease;
+}
+
+.dpad-btn:active, .dpad-btn.active {
+  background: var(--alk-gold);
+  color: var(--alk-navy-dark);
+  transform: scale(0.92);
+  box-shadow: 0 0 12px rgba(242, 169, 0, 0.7);
+}
+
+/* Przyciski akcji (Sprint) */
+.touch-actions-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.touch-action-btn {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  touch-action: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  border: 2px solid var(--alk-gold);
+  transition: all 0.12s ease;
+}
+
+.btn-sprint {
+  background: linear-gradient(135deg, var(--alk-navy-main) 0%, var(--alk-blue) 100%);
+  color: #ffffff;
+}
+
+.btn-sprint:active, .btn-sprint.active {
+  background: linear-gradient(135deg, var(--alk-gold) 0%, var(--alk-gold-light) 100%);
+  color: var(--alk-navy-dark);
+  transform: scale(0.92);
+  box-shadow: 0 0 18px rgba(242, 169, 0, 0.85);
+}
+
+.action-icon {
+  font-size: 24px;
+}
+
+.action-label {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
+/* W widokach poniżej 768px włącz wyświetlanie ekranowych przycisków sterowania (#mobile-controls) */
+@media (max-width: 768px) {
+  #mobile-controls,
+  #touchControls,
+  .touch-controls {
+    display: flex;
+  }
+  
+  .controls-hint {
+    display: none;
+  }
+
+  .game-container {
+    padding: 8px;
+    justify-content: flex-start;
+  }
+
+  .hud-bar {
+    padding: 8px 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .hud-branding {
+    display: none; /* Więcej przestrzeni na HUD w mobile */
+  }
+
+  .hud-item {
+    min-width: 100px;
+  }
+
+  .legend-items {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-card {
+    padding: 18px;
+  }
+
+  .modal-title {
+    font-size: 22px;
+  }
+
+  .dpad-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 16px;
+  }
+
+  .dpad-center {
+    width: 40px;
+    height: 40px;
+  }
+
+  .touch-action-btn {
+    width: 66px;
+    height: 66px;
+  }
+}
