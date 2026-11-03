@@ -1,19 +1,15 @@
 /**
  * Kozminski Escape: Polowanie na ECTS
- * Serce gry: Silnik Canvas 2D (800x540)
+ * Główny silnik gry 2D na Canvas (800x540)
  * Akademia Leona Koźmińskiego (ALK)
  */
 
 (() => {
-  // --- Konfiguracja i Stałe Canvas ---
-  const CANVAS_WIDTH = 800;
-  const CANVAS_HEIGHT = 540;
-  const TARGET_ECTS = 30;
-
+  // --- Elementy DOM ---
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 
-  // --- Elementy HUD ---
+  // HUD
   const ectsCounter = document.getElementById('ectsCounter');
   const ectsProgressBar = document.getElementById('ectsProgressBar');
   const staminaProgressBar = document.getElementById('staminaProgressBar');
@@ -25,12 +21,22 @@
   const soundIcon = document.getElementById('soundIcon');
   const pauseToggleBtn = document.getElementById('pauseToggleBtn');
   const pauseIcon = document.getElementById('pauseIcon');
+  const retroToggleBtn = document.getElementById('retroToggleBtn');
+  const retroHudBadge = document.getElementById('retroHudBadge');
+
+  // Tryb Ultra-Retro w modalu
+  const retroModeCheckbox = document.getElementById('retroModeCheckbox');
+  const retroPillStatus = document.getElementById('retroPillStatus');
+  const retroModeDesc = document.getElementById('retroModeDesc');
+  const freezeLegendIcon = document.getElementById('freezeLegendIcon');
+  const freezeLegendTitle = document.getElementById('freezeLegendTitle');
+  const freezeLegendText = document.getElementById('freezeLegendText');
 
   // Dymek profesora
   const profSpeech = document.getElementById('profSpeech');
   const profDialogText = document.getElementById('profDialogText');
 
-  // Ekrany modalne
+  // Modale
   const startModal = document.getElementById('startModal');
   const startGameBtn = document.getElementById('startGameBtn');
   const gameOverModal = document.getElementById('gameOverModal');
@@ -38,7 +44,7 @@
   const victoryModal = document.getElementById('victoryModal');
   const playAgainBtn = document.getElementById('playAgainBtn');
 
-  // Statystyki modalne
+  // Statystyki w modalach
   const failEctsCollected = document.getElementById('failEctsCollected');
   const failSurvivalTime = document.getElementById('failSurvivalTime');
   const failCoffeesDrunk = document.getElementById('failCoffeesDrunk');
@@ -48,97 +54,160 @@
   const victoryTime = document.getElementById('victoryTime');
   const victoryRating = document.getElementById('victoryRating');
 
-  // Przyciski dotykowe (D-pad i sprint)
+  // Przyciski dotykowe
   const dpadUp = document.getElementById('dpadUp');
   const dpadDown = document.getElementById('dpadDown');
   const dpadLeft = document.getElementById('dpadLeft');
   const dpadRight = document.getElementById('dpadRight');
   const touchSprint = document.getElementById('touchSprint');
 
-  // --- Cytaty Egzaminatora (zgodne ze specyfikacją) ---
+  // --- Cytaty Egzaminatora ---
   const PROF_QUOTES = [
-    '„A gdzie przypis harwardzki?!”',
-    '„Ten bilans się nie zamyka!”',
-    '„Widzę Pana we wrześniu!”',
-    '„USOS właśnie zamknął protokół!”',
-    '„Czy ten esej pisał Pan, czy ChatGPT?!”',
-    '„Proszę podejść z indeksem i kartą zaliczeń!”',
-    '„Termin zerówki bezpowrotnie minął!”',
-    '„Czerwony długopis już nie wybacza!”',
+    '„Widzę Pana! Proszę podejść z indeksem i kartą zaliczeń!”',
+    '„Gdzie jest Pana bibliografia do eseju końcowego?!”',
+    '„Czerwony długopis już na Pana czeka!”',
+    '„Pana frekwencja na wykładach budzi moje wątpliwości!”',
+    '„Zaraz dopiszę dwóję do systemu USOS!”',
+    '„Termin zerówkowy dawno minął, proszę pana!”',
+    '„Poproszę legitymację studencką Akademii!”',
+    '„Na Patio nie uciekniesz przed kolokwium!”',
   ];
 
-  // --- 1. Układ Kampusu na Canvasie ---
-  // Granice auli, sal i centralnego Patio ALK
+  // Cytaty przy czytaniu gazety przez profesora (Ultra-Retro)
+  const NEWSPAPER_QUOTES = [
+    '„(Szelest gazety) ...O, fascynujący felieton o fuzjach i przejęciach!”',
+    '„Nie rozmawiać tam! Muszę w spokoju doczytać notowania giełdowe!”',
+    '„Hmm, 6 liter na »postrach studentów w sesji«... czyżby Kolokwium?”',
+    '„Zaraz skończę czytać stronę redakcyjną! Ani mi się ważcie ściągać!”',
+    '„(Chowa głowę za gazetą) ...W ciszy pisać, wszystko widzę kątem oka!”',
+    '„Świetny dodatek prawniczy w dzisiejszym wydaniu... Piszcie sami!”',
+  ];
+
+  // Cytaty przy paraliżu Gemini AI (Tryb standardowy)
+  const GEMINI_QUOTES = [
+    '„Co to za prompt w Gemini AI?! Mój algorytm oceniania się zawiesił!”',
+    '„Gemini wygenerowało referat w 3 sekundy?! Niemożliwe, muszę to sprawdzić!”',
+    '„Błąd w przypisach! Sieć neuronowa Gemini zablokowała arkusz ocen!”',
+    '„Czy ten esej pisał student czy multimodalny model Gemini?!”',
+  ];
+
+  // Reakcje profesora gdy student ściąga tuż obok czytającego egzaminatora
+  const CHEAT_REACTIONS = [
+    '„Coś tam szura w ławkach? E, pewnie przeciąg z korytarza...”',
+    '„(Zza gazety) ...Słyszę przewracanie kartek! Pewnie z mojej gazety...”',
+    '„Ciekawe te prognozy stóp procentowych... Piszcie tam, piszcie!”',
+    '„(Szelest papieru) ...Jeszcze tylko krzyżówka i zbieram kartki!”',
+  ];
+
+  const FAIL_QUOTES = [
+    '„Niestety, widzimy się na poprawce we wrześniu. Proszę powtórzyć materiał od pierwszego wykładu!”',
+    '„Dwója z wykrzyknikiem wpisana do protokołu. Do zobaczenia w Kampanii Wrześniowej!”',
+    '„Brak zaliczenia ćwiczeń. Dziekanat poinformuje Pana o opłacie za powtarzanie semestru!”',
+  ];
+
+  // --- Stałe gry ---
+  const CANVAS_WIDTH = 800;
+  const CANVAS_HEIGHT = 540;
+  const TARGET_ECTS = 30;
+
+  // Mapa korytarzy i Patio ALK (Ściany i przeszkody)
+  // Granice: zewnętrzne ściany + pokoje dydaktyczne i sale
   const WALLS = [
-    // Zewnętrzne mury uczelni (obwód)
-    { x: 0, y: 0, w: CANVAS_WIDTH, h: 22, name: 'Mur Północny' },
-    { x: 0, y: CANVAS_HEIGHT - 22, w: CANVAS_WIDTH, h: 22, name: 'Mur Południowy' },
-    { x: 0, y: 0, w: 22, h: CANVAS_HEIGHT, name: 'Mur Zachodni' },
-    { x: CANVAS_WIDTH - 22, y: 0, w: 22, h: CANVAS_HEIGHT, name: 'Mur Wschodni' },
+    // Zewnętrzne ściany
+    { x: 0, y: 0, w: CANVAS_WIDTH, h: 20 },
+    { x: 0, y: CANVAS_HEIGHT - 20, w: CANVAS_WIDTH, h: 20 },
+    { x: 0, y: 0, w: 20, h: CANVAS_HEIGHT },
+    { x: CANVAS_WIDTH - 20, y: 0, w: 20, h: CANVAS_HEIGHT },
 
-    // Aula A (Lewy górny róg kampusu - z szerokim wyjściem na korytarz i Patio)
-    { x: 154, y: 22, w: 16, h: 42 },
-    { x: 22, y: 154, w: 42, h: 16 },
+    // Skrzydło A (Lewy górny róg - Sala wykładowa)
+    { x: 120, y: 20, w: 18, h: 140 },
+    { x: 120, y: 160, w: 90, h: 18 },
 
-    // Biblioteka (Prawy górny róg kampusu - z szerokim wyjściem)
-    { x: 630, y: 22, w: 16, h: 42 },
-    { x: 736, y: 154, w: 42, h: 16 },
+    // Skrzydło B (Prawy górny róg - Biblioteka ALK)
+    { x: 660, y: 20, w: 18, h: 140 },
+    { x: 590, y: 160, w: 88, h: 18 },
 
-    // Dziekanat (Lewy dolny róg kampusu - z szerokim wyjściem)
-    { x: 22, y: 370, w: 42, h: 16 },
-    { x: 154, y: 476, w: 16, h: 42 },
+    // Skrzydło C (Lewy dolny róg - Dziekanat i Bufet)
+    { x: 120, y: 380, w: 90, h: 18 },
+    { x: 120, y: 380, w: 18, h: 140 },
 
-    // Lab Komputerowy (Prawy dolny róg kampusu - z szerokim wyjściem)
-    { x: 736, y: 370, w: 42, h: 16 },
-    { x: 630, y: 476, w: 16, h: 42 },
+    // Skrzydło D (Prawy dolny róg - Laboratoria)
+    { x: 590, y: 380, w: 88, h: 18 },
+    { x: 660, y: 380, w: 18, h: 140 },
 
-    // Kolumny korytarzowe wokół Patio ALK
-    { x: 245, y: 165, w: 22, h: 22 },
-    { x: 533, y: 165, w: 22, h: 22 },
-    { x: 245, y: 353, w: 22, h: 22 },
-    { x: 533, y: 353, w: 22, h: 22 },
+    // Centralne Patio - Kolumny i małe murki dekoracyjne
+    { x: 260, y: 170, w: 24, h: 24 },
+    { x: 516, y: 170, w: 24, h: 24 },
+    { x: 260, y: 346, w: 24, h: 24 },
+    { x: 516, y: 346, w: 24, h: 24 },
 
-    // Cokół pomnika Lwa w centrum Patio ALK
-    { x: 382, y: 252, w: 36, h: 36, isMonument: true },
+    // Cokół pomnika Lwa w centrum patio (przeszkoda nieprzenikalna)
+    { x: 380, y: 250, w: 40, h: 40 },
   ];
 
-  // Obszar Patio ALK 🌿
-  const PATIO = {
-    x: 225,
-    y: 135,
-    w: 350,
-    h: 270,
-  };
-
-  // Strefy sal z etykietami na mapie
-  const ROOMS = [
-    { name: 'Aula A', x: 86, y: 90, boxX: 22, boxY: 22, boxW: 132, boxH: 132, color: '#f2a900' },
-    { name: 'Biblioteka', x: 714, y: 90, boxX: 646, boxY: 22, boxW: 132, boxH: 132, color: '#ffc740' },
-    { name: 'Dziekanat', x: 86, y: 450, boxX: 22, boxY: 386, boxW: 132, boxH: 132, color: '#f2a900' },
-    { name: 'Lab Komputerowy', x: 714, y: 450, boxX: 646, boxY: 386, boxW: 132, boxH: 132, color: '#ffc740' },
-  ];
+  // Obszar Zielonego Patio (dla efektu tła)
+  const PATIO_AREA = { x: 230, y: 140, w: 340, h: 260 };
 
   // --- Stan gry ---
   let gameState = 'START'; // 'START' | 'PLAYING' | 'PAUSED' | 'GAMEOVER' | 'VICTORY'
   let ects = 0;
   let stamina = 100;
-  const maxStamina = 100;
+  let maxStamina = 100;
   let isSprinting = false;
-
-  // Efekty czasowe
-  let coffeeTurboTime = 0;      // 5 sekund przyspieszenia po kawie
-  let freezeTimer = 0;          // 3.5 sekundy zamrożenia profesora przez Gemini AI
-  let hasShield = false;        // Legitymacja ALK chroni przed 1 złapaniem
+  let coffeeBoostTime = 0;
   let coffeesDrunk = 0;
-  let geminiUsed = 0;
   let gameStartTime = 0;
   let elapsedTime = 0;
-  let quoteTimer = 0;
-  let speechBubbleTimeout = null;
+  let speechTimer = 0;
   let particles = [];
+  let floatingTexts = [];
+  let speechBubbleTimeout = null;
 
-  // Sterowanie
-  const input = {
+  // Tryb Ultra-Retro i Paraliż (Gazeta vs Gemini AI)
+  let isUltraRetro = localStorage.getItem('alk_ultra_retro') === 'true';
+  let freezeTimer = 0;
+  let lastCheatTime = 0;
+
+  // Przełączanie Trybu Ultra-Retro
+  function setUltraRetroMode(enabled) {
+    isUltraRetro = Boolean(enabled);
+    try {
+      localStorage.setItem('alk_ultra_retro', isUltraRetro ? 'true' : 'false');
+    } catch (e) {}
+
+    const app = document.getElementById('app');
+    if (isUltraRetro) {
+      if (app) app.classList.add('ultra-retro');
+      document.body.classList.add('ultra-retro');
+      if (retroToggleBtn) retroToggleBtn.classList.add('active');
+      if (retroHudBadge) retroHudBadge.classList.remove('hidden');
+      if (retroModeCheckbox) retroModeCheckbox.checked = true;
+      if (retroPillStatus) {
+        retroPillStatus.textContent = 'WŁĄCZONY';
+        retroPillStatus.style.color = '#fde047';
+      }
+      if (freezeLegendIcon) freezeLegendIcon.textContent = '📰';
+      if (freezeLegendTitle) freezeLegendTitle.textContent = 'Gazeta (Ultra-Retro):';
+      if (freezeLegendText) freezeLegendText.textContent = 'Egzaminator czyta gazetę podczas egzaminu i nie patrzy, jak studenci ściągają!';
+    } else {
+      if (app) app.classList.remove('ultra-retro');
+      document.body.classList.remove('ultra-retro');
+      if (retroToggleBtn) retroToggleBtn.classList.remove('active');
+      if (retroHudBadge) retroHudBadge.classList.add('hidden');
+      if (retroModeCheckbox) retroModeCheckbox.checked = false;
+      if (retroPillStatus) {
+        retroPillStatus.textContent = 'WYŁĄCZONY';
+        retroPillStatus.style.color = '';
+      }
+      if (freezeLegendIcon) freezeLegendIcon.textContent = '✨';
+      if (freezeLegendTitle) freezeLegendTitle.textContent = 'Gemini AI:';
+      if (freezeLegendText) freezeLegendText.textContent = 'Generuje prompt, który paraliżuje Egzaminatora na 6 sekund!';
+    }
+    updateHUD();
+  }
+
+  // Wejścia klawiatury i dotyku
+  const keys = {
     up: false,
     down: false,
     left: false,
@@ -146,102 +215,65 @@
     sprint: false,
   };
 
-  // --- 2. Gracz (Student) ---
+  // --- Obiekty: Gracz (Student) ---
   const player = {
-    x: 86,
-    y: 95,
-    radius: 12,
-    baseSpeed: 3.2,
-    sprintSpeed: 5.4,
+    x: 70,
+    y: 70,
+    size: 22,
+    baseSpeed: 3.3,
+    sprintSpeed: 5.6,
+    color: '#3b82f6',
     facing: 'down',
     walkCycle: 0,
-    shieldGlow: 0,
   };
 
-  // --- 3. Przeciwnik (Egzaminator) ---
+  // --- Obiekty: Egzaminator (Profesor) ---
   const examiner = {
-    x: 714,
-    y: 445,
-    radius: 13,
-    baseSpeed: 2.15,
-    currentSpeed: 2.15,
+    x: 720,
+    y: 460,
+    size: 24,
+    baseSpeed: 2.2,
+    currentSpeed: 2.2,
     facing: 'left',
     walkCycle: 0,
-    freezePulse: 0,
+    rageMode: false,
+    penGlow: 0,
   };
 
-  // --- 4. Przedmioty na Kampusie ---
-  // Typy: 'ects' (📜), 'coffee' (☕), 'gemini' (💻), 'card' (🪪)
+  // --- Przedmioty (ECTS, Kawa, Lew) ---
   let items = [];
 
-  // Pomocnik audio z bezpośrednim wywołaniem SoundSystem.play(...) zgodnie ze specyfikacją
-  function playSound(type) {
-    if (typeof SoundSystem !== 'undefined' && typeof SoundSystem.play === 'function') {
-      SoundSystem.play(type);
-    } else if (window.soundSystem && typeof window.soundSystem.play === 'function') {
-      window.soundSystem.play(type);
-    }
-  }
-
-  // --- Sprawdzanie kolizji ---
-  function checkCircleBoxCollision(cx, cy, radius, box) {
-    const closestX = Math.max(box.x, Math.min(cx, box.x + box.w));
-    const closestY = Math.max(box.y, Math.min(cy, box.y + box.h));
-    const distX = cx - closestX;
-    const distY = cy - closestY;
-    return (distX * distX + distY * distY) < (radius * radius);
-  }
-
-  function canMoveTo(x, y, radius) {
-    for (const wall of WALLS) {
-      if (checkCircleBoxCollision(x, y, radius, wall)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // --- Bezpieczny spawn przedmiotów poza ścianami ---
+  // --- Generowanie przedmiotów na mapie ---
   function spawnItem(type) {
     let placed = false;
     let attempts = 0;
-
-    while (!placed && attempts < 150) {
+    while (!placed && attempts < 100) {
       attempts++;
+      const itemSize = type === 'lion' ? 22 : (type === 'freeze' ? 18 : 16);
       let x, y;
 
-      if (type === 'coffee') {
-        // Kawa najczęściej pojawia się w okolicach Patio ALK lub korytarzy
-        x = PATIO.x + 30 + Math.random() * (PATIO.w - 60);
-        y = PATIO.y + 30 + Math.random() * (PATIO.h - 60);
-      } else if (type === 'gemini') {
-        // Gemini AI często w Labie Komputerowym lub salach
-        x = 40 + Math.random() * (CANVAS_WIDTH - 80);
-        y = 40 + Math.random() * (CANVAS_HEIGHT - 80);
+      if (type === 'lion') {
+        // Złoty Lew pojawia się zawsze na Patio
+        x = PATIO_AREA.x + 40 + Math.random() * (PATIO_AREA.w - 80);
+        y = PATIO_AREA.y + 40 + Math.random() * (PATIO_AREA.h - 80);
       } else {
-        // ECTS oraz Legitymacja ALK
         x = 40 + Math.random() * (CANVAS_WIDTH - 80);
         y = 40 + Math.random() * (CANVAS_HEIGHT - 80);
       }
 
-      // Sprawdź czy nie koliduje z żadną ścianą
-      let insideWall = false;
-      for (const wall of WALLS) {
-        if (checkCircleBoxCollision(x, y, 16, wall)) {
-          insideWall = true;
-          break;
-        }
-      }
+      // Sprawdzenie kolizji ze ścianami
+      const itemRect = { x: x - itemSize, y: y - itemSize, w: itemSize * 2, h: itemSize * 2 };
+      const hitsWall = WALLS.some((wall) => checkAABB(itemRect, wall));
+      
+      // Nie stawiaj za blisko gracza
+      const distToPlayer = Math.hypot(x - player.x, y - player.y);
 
-      // Nie twórz zbyt blisko studenta
-      const distToStudent = Math.hypot(x - player.x, y - player.y);
-
-      if (!insideWall && distToStudent > 75) {
+      if (!hitsWall && distToPlayer > 60) {
         items.push({
           x,
           y,
-          type,
-          radius: 12,
+          size: itemSize,
+          type, // 'ects' | 'coffee' | 'lion' | 'freeze'
           bobOffset: Math.random() * Math.PI * 2,
         });
         placed = true;
@@ -249,319 +281,353 @@
     }
   }
 
-  function initCampusItems() {
+  function initItems() {
     items = [];
-    // 7x ECTS (📜)
+    // 7 indeksów ECTS na start
     for (let i = 0; i < 7; i++) {
       spawnItem('ects');
     }
-    // 2x Kawa z Patio ALK (☕)
-    for (let i = 0; i < 2; i++) {
+    // 3 kawy z bufetu ALK
+    for (let i = 0; i < 3; i++) {
       spawnItem('coffee');
     }
-    // 1x Gemini AI (💻)
-    spawnItem('gemini');
-    // 1x Legitymacja ALK (🪪)
-    spawnItem('card');
+    // 1 rzadki Złoty Lew
+    spawnItem('lion');
+    // 1 przedmiot paraliżujący: Gazeta (Ultra-Retro) lub Gemini AI (Normal)
+    spawnItem('freeze');
+  }
+
+  // --- Narzędzia kolizji ---
+  function checkAABB(rect1, rect2) {
+    return (
+      rect1.x < rect2.x + rect2.w &&
+      rect1.x + rect1.w > rect2.x &&
+      rect1.y < rect2.y + rect2.h &&
+      rect1.y + rect1.h > rect2.y
+    );
+  }
+
+  function canMoveTo(x, y, radius) {
+    const box = { x: x - radius, y: y - radius, w: radius * 2, h: radius * 2 };
+    for (const wall of WALLS) {
+      if (checkAABB(box, wall)) return false;
+    }
+    return true;
   }
 
   // --- Dymek wypowiedzi profesora ---
-  function triggerProfQuote(customText = null) {
+  function showProfQuote(text, soundType = 'freeze') {
     if (!profSpeech || !profDialogText) return;
-    const text = customText || PROF_QUOTES[Math.floor(Math.random() * PROF_QUOTES.length)];
     profDialogText.textContent = text;
     profSpeech.classList.remove('bubble-hidden');
+
+    if (window.soundSystem && soundType !== 'none') {
+      window.soundSystem.play(soundType);
+    }
 
     if (speechBubbleTimeout) clearTimeout(speechBubbleTimeout);
     speechBubbleTimeout = setTimeout(() => {
       profSpeech.classList.add('bubble-hidden');
-    }, 3600);
+    }, 3800);
   }
 
   // --- Resetowanie gry ---
   function resetGame() {
     ects = 0;
     stamina = 100;
-    coffeeTurboTime = 0;
-    freezeTimer = 0;
-    hasShield = false;
+    coffeeBoostTime = 0;
     coffeesDrunk = 0;
-    geminiUsed = 0;
     gameStartTime = Date.now();
     elapsedTime = 0;
-    quoteTimer = 0;
     particles = [];
+    floatingTexts = [];
+    freezeTimer = 0;
+    lastCheatTime = 0;
+    speechTimer = 0;
 
-    // Reset pozycji studenta (Aula A - bezpośrednio przy otwartych wyjściach)
-    player.x = 86;
-    player.y = 95;
+    // Reset pozycji
+    player.x = 70;
+    player.y = 70;
     player.facing = 'down';
 
-    // Reset pozycji profesora (Lab Komputerowy)
-    examiner.x = 714;
-    examiner.y = 445;
+    examiner.x = 720;
+    examiner.y = 460;
     examiner.facing = 'left';
     examiner.currentSpeed = examiner.baseSpeed;
 
-    initCampusItems();
+    initItems();
     updateHUD();
 
     if (profSpeech) profSpeech.classList.add('bubble-hidden');
   }
 
-  // --- Rozpoczęcie semestru (Start) ---
+  // --- Rozpoczęcie rozgrywki ---
   function startGame() {
-    if (typeof SoundSystem !== 'undefined' && typeof SoundSystem.init === 'function') {
-      SoundSystem.init();
-    } else if (window.soundSystem) {
+    if (window.soundSystem) {
       window.soundSystem.init();
+      window.soundSystem.play('ects');
     }
-    playSound('ects');
-
     startModal.classList.add('hidden');
     gameOverModal.classList.add('hidden');
     victoryModal.classList.add('hidden');
 
     resetGame();
     gameState = 'PLAYING';
-    triggerProfQuote('„Sesja rozpoczęta! Czerwony długopis jest w pogotowiu!”');
+    showProfQuote('„Kolokwium zaliczeniowe rozpoczęte! Poproszę indeksy!”');
   }
 
-  // --- Koniec Gry: Kampania Wrześniowa (Porażka) ---
+  // --- Koniec gry: Kampania Wrześniowa ---
   function triggerGameOver() {
     gameState = 'GAMEOVER';
-    playSound('hit');
+    if (window.soundSystem) {
+      window.soundSystem.play('hit');
+    }
 
+    // Uzupełnij statystyki
     failEctsCollected.textContent = `${ects} / ${TARGET_ECTS}`;
     failSurvivalTime.textContent = formatTime(elapsedTime);
     failCoffeesDrunk.textContent = coffeesDrunk;
-    failQuote.textContent = '„Niestety, dopadł Cię czerwony długopis! Widzimy się na poprawce we wrześniu!”';
+    failQuote.textContent = FAIL_QUOTES[Math.floor(Math.random() * FAIL_QUOTES.length)];
 
     gameOverModal.classList.remove('hidden');
   }
 
-  // --- Wygrana: Zaliczony Semestr (30 ECTS) ---
+  // --- Zwycięstwo: Semestr Zaliczony! ---
   function triggerVictory() {
     gameState = 'VICTORY';
-    playSound('win');
+    if (window.soundSystem) {
+      window.soundSystem.play('win');
+    }
 
     victoryEcts.textContent = `${ects} / ${TARGET_ECTS}`;
     victoryTime.textContent = formatTime(elapsedTime);
 
     let rating = 'DOBRY (4.0)';
-    if (elapsedTime <= 65) rating = 'CELUJĄCY Z WYRÓŻNIENIEM (5.5) 🏆';
-    else if (elapsedTime <= 95) rating = 'BARDZO DOBRY (5.0) ⭐';
-    else if (elapsedTime <= 135) rating = 'PONADPRZECIĘTNY (4.5)';
+    if (elapsedTime < 60) rating = 'CELUJĄCY Z WYRÓŻNIENIEM (5.5) 🏆';
+    else if (elapsedTime < 90) rating = 'BARDZO DOBRY (5.0) ⭐';
+    else if (elapsedTime < 130) rating = 'PONADPRZECIĘTNY (4.5)';
     victoryRating.textContent = rating;
 
-    // Cząsteczki triumfalnego konfetti
-    for (let i = 0; i < 90; i++) {
-      particles.push({
-        x: CANVAS_WIDTH / 2,
-        y: CANVAS_HEIGHT / 2,
-        vx: (Math.random() - 0.5) * 14,
-        vy: (Math.random() - 0.5) * 14 - 3,
-        color: ['#f2a900', '#ffc740', '#004b87', '#22c55e', '#ef4444'][Math.floor(Math.random() * 5)],
-        size: 4 + Math.random() * 5,
-        life: 1,
-        decay: 0.009 + Math.random() * 0.01,
-      });
-    }
-
+    // Utwórz konfetti
+    createVictoryConfetti();
     victoryModal.classList.remove('hidden');
   }
 
+  function createVictoryConfetti() {
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: CANVAS_WIDTH / 2,
+        y: CANVAS_HEIGHT / 2,
+        vx: (Math.random() - 0.5) * 12,
+        vy: (Math.random() - 0.5) * 12 - 3,
+        color: ['#f5a623', '#3b82f6', '#22c55e', '#ef4444', '#ec4899'][Math.floor(Math.random() * 5)],
+        size: 4 + Math.random() * 5,
+        life: 1,
+        decay: 0.008 + Math.random() * 0.01,
+      });
+    }
+  }
+
+  // --- Formatowanie czasu ---
   function formatTime(seconds) {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
-  // --- Aktualizacja paska stanu (HUD) ---
+  // --- Aktualizacja interfejsu (HUD) ---
   function updateHUD() {
     // ECTS
     ectsCounter.textContent = `${ects} / ${TARGET_ECTS}`;
-    const pct = Math.min(100, (ects / TARGET_ECTS) * 100);
-    ectsProgressBar.style.width = `${pct}%`;
+    const ectsRatio = Math.min(100, (ects / TARGET_ECTS) * 100);
+    ectsProgressBar.style.width = `${ectsRatio}%`;
 
     // Stamina
     staminaProgressBar.style.width = `${stamina}%`;
     staminaPercent.textContent = `${Math.round(stamina)}%`;
 
-    // Zegar
+    // Czas
     timerDisplay.textContent = formatTime(elapsedTime);
 
-    // Dynamiczny status sesji
+    // Status odległości od egzaminatora oraz paraliżu / gazety
     const dist = Math.hypot(player.x - examiner.x, player.y - examiner.y);
-
     if (freezeTimer > 0) {
-      statusMessage.className = 'hud-status-badge';
-      statusMessage.style.borderColor = '#38bdf8';
-      statusText.innerHTML = `❄️ Gemini AI: Profesor zamrożony (${freezeTimer.toFixed(1)}s)`;
-    } else if (hasShield) {
-      statusMessage.className = 'hud-status-badge';
-      statusMessage.style.borderColor = '#f2a900';
-      statusText.innerHTML = '🪪 Legitymacja ALK: Tarcza aktywna!';
-    } else if (coffeeTurboTime > 0) {
-      statusMessage.className = 'hud-status-badge';
-      statusMessage.style.borderColor = '#f2a900';
-      statusText.innerHTML = `☕ Turbo Kawa z Patio! (${coffeeTurboTime.toFixed(1)}s)`;
-    } else if (dist < 170) {
+      if (isUltraRetro) {
+        statusMessage.className = 'hud-status-badge status-retro-freeze';
+        statusMessage.style.borderColor = '#f59e0b';
+        statusText.textContent = `📰 Profesor czyta gazetę! Ściągaj! (${Math.ceil(freezeTimer)}s)`;
+      } else {
+        statusMessage.className = 'hud-status-badge status-freeze';
+        statusMessage.style.borderColor = '#38bdf8';
+        statusText.textContent = `✨ Paraliż Gemini AI aktywny! (${Math.ceil(freezeTimer)}s)`;
+      }
+    } else if (dist < 180) {
       statusMessage.className = 'hud-status-badge status-alert';
       statusMessage.style.borderColor = '';
       statusText.textContent = 'UWAGA! Egzaminator tuż za Tobą!';
+    } else if (coffeeBoostTime > 0) {
+      statusMessage.className = 'hud-status-badge';
+      statusMessage.style.borderColor = '#f5a623';
+      statusText.textContent = `Doładowanie espresso! (${Math.ceil(coffeeBoostTime)}s)`;
     } else {
       statusMessage.className = 'hud-status-badge status-safe';
-      statusMessage.style.borderColor = '';
-      statusText.textContent = 'Szukaj ECTS w aulach i na Patio!';
+      statusMessage.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+      statusText.textContent = isUltraRetro
+        ? 'Tryb Retro: Gazeta paraliżuje profesora!'
+        : 'Korytarze czyste. Szukaj ECTS!';
     }
   }
 
-  // --- Główna logika gry (Update) ---
+  // --- Aktualizacja logiki gry ---
   function update(dt) {
     if (gameState !== 'PLAYING') return;
 
     elapsedTime = (Date.now() - gameStartTime) / 1000;
 
-    // Odliczanie czasu efektów
-    if (coffeeTurboTime > 0) {
-      coffeeTurboTime -= dt;
-      if (coffeeTurboTime < 0) coffeeTurboTime = 0;
+    // Przelicznik kofeiny
+    if (coffeeBoostTime > 0) {
+      coffeeBoostTime -= dt;
+      if (coffeeBoostTime < 0) coffeeBoostTime = 0;
     }
 
+    // Czas paraliżu (Gazeta / Gemini AI)
     if (freezeTimer > 0) {
       freezeTimer -= dt;
-      if (freezeTimer < 0) freezeTimer = 0;
+      if (freezeTimer <= 0) {
+        freezeTimer = 0;
+        if (isUltraRetro) {
+          showProfQuote('„Koniec czytania prasy! Indeksy na stół, sprawdzam ściągi!”', 'newspaper');
+        } else {
+          showProfQuote('„Restart systemu oceniania! Widzę Pana znowu!”', 'freeze');
+        }
+      }
     }
 
-    // Dynamiczne wypowiedzi akademickie profesora co 9-12 sekund
-    quoteTimer += dt;
-    if (quoteTimer > 10.5 && freezeTimer <= 0) {
-      quoteTimer = 0;
-      triggerProfQuote();
+    // Dynamiczne wypowiedzi profesora co kilkanaście sekund (gdy nie czyta gazety)
+    speechTimer += dt;
+    if (speechTimer > 12 && freezeTimer <= 0) {
+      speechTimer = 0;
+      const quote = PROF_QUOTES[Math.floor(Math.random() * PROF_QUOTES.length)];
+      showProfQuote(quote);
     }
 
-    // --- 2. Ruch wektorowy studenta ---
-    let vx = 0;
-    let vy = 0;
-
-    if (input.up) vy -= 1;
-    if (input.down) vy += 1;
-    if (input.left) vx -= 1;
-    if (input.right) vx += 1;
-
-    // Normalizacja wektora (zapobiega szybszemu chodzeniu po przekątnych)
-    if (vx !== 0 && vy !== 0) {
-      vx *= 0.7071;
-      vy *= 0.7071;
+    // Pływające napisy (bonusy ze ściągania, power-upy)
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+      const ft = floatingTexts[i];
+      ft.y -= 22 * dt;
+      ft.life -= dt;
+      if (ft.life <= 0) {
+        floatingTexts.splice(i, 1);
+      }
     }
 
-    const isMoving = vx !== 0 || vy !== 0;
+    // --- Ruch Gracza ---
+    let dx = 0;
+    let dy = 0;
 
-    // Mechanika staminy i sprintu
-    isSprinting = input.sprint && isMoving && stamina > 6;
+    if (keys.up) dy -= 1;
+    if (keys.down) dy += 1;
+    if (keys.left) dx -= 1;
+    if (keys.right) dx += 1;
+
+    // Normalizacja wektora ruchu
+    if (dx !== 0 && dy !== 0) {
+      dx *= 0.7071;
+      dy *= 0.7071;
+    }
+
+    // Sprint i Stamina
+    isSprinting = keys.sprint && (dx !== 0 || dy !== 0) && stamina > 5;
     let currentSpeed = player.baseSpeed;
 
-    if (coffeeTurboTime > 0) {
-      currentSpeed += 1.8; // Turbo po kawie z Patio
+    if (coffeeBoostTime > 0) {
+      currentSpeed += 1.4; // Boost kawowy
     }
 
     if (isSprinting) {
-      currentSpeed = player.sprintSpeed + (coffeeTurboTime > 0 ? 1.4 : 0);
-      stamina -= 34 * dt;
+      currentSpeed = player.sprintSpeed;
+      if (coffeeBoostTime > 0) currentSpeed += 1.0;
+      stamina -= 32 * dt;
       if (stamina < 0) stamina = 0;
 
       // Cząsteczki sprintu
-      if (Math.random() < 0.35) {
+      if (Math.random() < 0.3) {
         particles.push({
           x: player.x,
-          y: player.y + 8,
-          vx: -vx * 1.6 + (Math.random() - 0.5),
-          vy: -vy * 1.6 + (Math.random() - 0.5),
-          color: coffeeTurboTime > 0 ? '#ffc740' : '#00a3ff',
+          y: player.y + 10,
+          vx: -dx * 1.5 + (Math.random() - 0.5),
+          vy: -dy * 1.5 + (Math.random() - 0.5),
+          color: coffeeBoostTime > 0 ? '#f5a623' : '#38bdf8',
           size: 3,
-          life: 0.5,
-          decay: 0.05,
-        });
-      }
-    } else {
-      // Regeneracja staminy: postój odnawia znacznie szybciej niż wolny chód
-      const regenRate = (!isMoving ? 26 : 14) * (coffeeTurboTime > 0 ? 2 : 1);
-      stamina = Math.min(maxStamina, stamina + regenRate * dt);
-    }
-
-    // Wyliczanie nowej pozycji gracza z kolizją ze ścianami (sliding po ścianach)
-    const nextX = player.x + vx * currentSpeed;
-    const nextY = player.y + vy * currentSpeed;
-
-    if (canMoveTo(nextX, player.y, player.radius)) {
-      player.x = nextX;
-    }
-    if (canMoveTo(player.x, nextY, player.radius)) {
-      player.y = nextY;
-    }
-
-    // Aktualizacja kierunku i animacji chodu
-    if (Math.abs(vx) > Math.abs(vy)) {
-      player.facing = vx > 0 ? 'right' : 'left';
-    } else if (vy !== 0) {
-      player.facing = vy > 0 ? 'down' : 'up';
-    }
-
-    if (isMoving) {
-      player.walkCycle += dt * (isSprinting ? 12 : 7);
-    }
-
-    // --- 3. Pościg Egzaminatora za studentem ---
-    // Profesor przyspiesza z każdym zebranym ECTS
-    examiner.currentSpeed = examiner.baseSpeed + (ects / TARGET_ECTS) * 1.45;
-
-    // Jeśli zamrożony przez Gemini AI - profesor stoi w paraliżu!
-    if (freezeTimer > 0) {
-      examiner.freezePulse += dt * 6;
-      // Cząsteczki lodu / cyber-paraliżu wokół profesora
-      if (Math.random() < 0.25) {
-        particles.push({
-          x: examiner.x + (Math.random() - 0.5) * 26,
-          y: examiner.y + (Math.random() - 0.5) * 26,
-          vx: 0,
-          vy: -0.8,
-          color: '#38bdf8',
-          size: 2.5,
           life: 0.6,
           decay: 0.04,
         });
       }
     } else {
-      // Aktywny pościg
-      const dx = player.x - examiner.x;
-      const dy = player.y - examiner.y;
-      const dist = Math.hypot(dx, dy);
+      // Regeneracja staminy (szybsza gdy pije kawę lub stoi)
+      const regenRate = (coffeeBoostTime > 0 ? 30 : 15) * (dx === 0 && dy === 0 ? 1.5 : 1);
+      stamina += regenRate * dt;
+      if (stamina > maxStamina) stamina = maxStamina;
+    }
 
-      if (dist > 0) {
-        const exDirX = dx / dist;
-        const exDirY = dy / dist;
+    // Aplikacja ruchu z kolizją
+    const targetX = player.x + dx * currentSpeed;
+    const targetY = player.y + dy * currentSpeed;
 
-        const exNextX = examiner.x + exDirX * examiner.currentSpeed;
-        const exNextY = examiner.y + exDirY * examiner.currentSpeed;
+    if (canMoveTo(targetX, player.y, player.size / 2)) {
+      player.x = targetX;
+    }
+    if (canMoveTo(player.x, targetY, player.size / 2)) {
+      player.y = targetY;
+    }
+
+    // Kierunek spojrzenia gracza
+    if (Math.abs(dx) > Math.abs(dy)) {
+      player.facing = dx > 0 ? 'right' : 'left';
+    } else if (dy !== 0) {
+      player.facing = dy > 0 ? 'down' : 'up';
+    }
+
+    if (dx !== 0 || dy !== 0) {
+      player.walkCycle += dt * 8;
+    }
+
+    // --- Ruch Egzaminatora (AI Ścigania) ---
+    // Jeśli freezeTimer > 0, egzaminator NIE rusza się wcale (czyta gazetę lub paraliż AI)!
+    if (freezeTimer > 0) {
+      examiner.currentSpeed = 0;
+    } else {
+      examiner.currentSpeed = examiner.baseSpeed + (ects / TARGET_ECTS) * 0.95;
+
+      const toPlayerX = player.x - examiner.x;
+      const toPlayerY = player.y - examiner.y;
+      const distToPlayer = Math.hypot(toPlayerX, toPlayerY);
+
+      if (distToPlayer > 0) {
+        let exDirX = toPlayerX / distToPlayer;
+        let exDirY = toPlayerY / distToPlayer;
+
+        // Sprawdź czy może iść wprost, jeśli nie - próba obejścia przeszkód
+        const exStepX = examiner.x + exDirX * examiner.currentSpeed;
+        const exStepY = examiner.y + exDirY * examiner.currentSpeed;
 
         let moved = false;
-        if (canMoveTo(exNextX, examiner.y, examiner.radius)) {
-          examiner.x = exNextX;
+        if (canMoveTo(exStepX, examiner.y, examiner.size / 2)) {
+          examiner.x = exStepX;
           moved = true;
         }
-        if (canMoveTo(examiner.x, exNextY, examiner.radius)) {
-          examiner.y = exNextY;
+        if (canMoveTo(examiner.x, exStepY, examiner.size / 2)) {
+          examiner.y = exStepY;
           moved = true;
         }
 
-        // Unikanie utknięcia na rogu ściany
+        // Proste ominięcie narożnika jeśli utknął
         if (!moved) {
-          if (canMoveTo(examiner.x + examiner.currentSpeed, examiner.y, examiner.radius)) {
+          if (canMoveTo(examiner.x + examiner.currentSpeed, examiner.y, examiner.size / 2)) {
             examiner.x += examiner.currentSpeed;
-          } else if (canMoveTo(examiner.x - examiner.currentSpeed, examiner.y, examiner.radius)) {
+          } else if (canMoveTo(examiner.x - examiner.currentSpeed, examiner.y, examiner.size / 2)) {
             examiner.x -= examiner.currentSpeed;
-          } else if (canMoveTo(examiner.x, examiner.y + examiner.currentSpeed, examiner.radius)) {
+          } else if (canMoveTo(examiner.x, examiner.y + examiner.currentSpeed, examiner.size / 2)) {
             examiner.y += examiner.currentSpeed;
           } else {
             examiner.y -= examiner.currentSpeed;
@@ -569,94 +635,152 @@
         }
 
         examiner.facing = exDirX > 0 ? 'right' : 'left';
-        examiner.walkCycle += dt * 7;
-      }
-
-      // Sprawdzenie kolizji egzaminatora ze studentem
-      if (dist < (player.radius + examiner.radius)) {
-        if (hasShield) {
-          // Legitymacja ALK pochłania atak i ratuje studenta!
-          hasShield = false;
-          playSound('shield');
-          triggerProfQuote('„Tym razem legitymacja Pana uratowała!”');
-
-          // Odepchnięcie profesora i chwilowe oszołomienie
-          examiner.x += (examiner.x - player.x) * 1.5;
-          examiner.y += (examiner.y - player.y) * 1.5;
-
-          // Rozbłysk ochronny
-          for (let p = 0; p < 18; p++) {
-            particles.push({
-              x: player.x,
-              y: player.y,
-              vx: Math.cos((p / 18) * Math.PI * 2) * 5,
-              vy: Math.sin((p / 18) * Math.PI * 2) * 5,
-              color: '#f2a900',
-              size: 4,
-              life: 0.6,
-              decay: 0.04,
-            });
-          }
-        } else {
-          // Brak tarczy - przegrana i kampania wrześniowa
-          triggerGameOver();
-          return;
-        }
+        examiner.walkCycle += dt * 6;
       }
     }
 
-    // --- 4. Zbieranie przedmiotów ze sceny ---
+    // Kolizja: Egzaminator łapie studenta LUB student bezkarnie ściąga!
+    const distToExaminer = Math.hypot(player.x - examiner.x, player.y - examiner.y);
+    if (distToExaminer < (player.size + examiner.size) / 2) {
+      if (freezeTimer > 0) {
+        // Egzaminator nie patrzy ("nie patrzy czy Studenci ściągają")!
+        if (isUltraRetro) {
+          const nowSec = Date.now() / 1000;
+          if (nowSec - lastCheatTime > 1.0) {
+            lastCheatTime = nowSec;
+            if (window.soundSystem) window.soundSystem.play('cheat');
+            if (ects < TARGET_ECTS) {
+              ects += 1;
+            }
+            stamina = Math.min(maxStamina, stamina + 30);
+            floatingTexts.push({
+              x: player.x,
+              y: player.y - 18,
+              text: 'ŚCIĄGA! +1 ECTS 📝🤫',
+              color: '#fef08a',
+              life: 1.4,
+            });
+            for (let p = 0; p < 8; p++) {
+              particles.push({
+                x: player.x,
+                y: player.y,
+                vx: (Math.random() - 0.5) * 3,
+                vy: -Math.random() * 3,
+                color: '#ffffff',
+                size: 2.5,
+                life: 0.6,
+                decay: 0.04,
+              });
+            }
+            if (Math.random() < 0.7) {
+              const rx = CHEAT_REACTIONS[Math.floor(Math.random() * CHEAT_REACTIONS.length)];
+              showProfQuote(rx, 'none');
+            }
+            if (ects >= TARGET_ECTS) {
+              triggerVictory();
+              return;
+            }
+          }
+        }
+      } else {
+        triggerGameOver();
+        return;
+      }
+    }
+
+    // --- Zbieranie przedmiotów ---
     for (let i = items.length - 1; i >= 0; i--) {
       const item = items[i];
       const d = Math.hypot(player.x - item.x, player.y - item.y);
-
-      if (d < player.radius + item.radius) {
+      if (d < player.size / 2 + item.size / 2) {
         if (item.type === 'ects') {
           ects += 1;
-          playSound('ects');
-
-          // Efekt cząsteczkowy zebrania ECTS
+          if (window.soundSystem) window.soundSystem.play('ects');
+          // Cząsteczki zebrania
           for (let p = 0; p < 8; p++) {
             particles.push({
               x: item.x,
               y: item.y,
-              vx: (Math.random() - 0.5) * 5,
-              vy: (Math.random() - 0.5) * 5,
-              color: '#f2a900',
-              size: 3.5,
+              vx: (Math.random() - 0.5) * 4,
+              vy: (Math.random() - 0.5) * 4,
+              color: '#f59e0b',
+              size: 3,
               life: 0.5,
               decay: 0.05,
             });
           }
-
           items.splice(i, 1);
-          if (ects < TARGET_ECTS) {
-            spawnItem('ects');
-          }
+          // Odradzanie nowego indeksu w innym miejscu
+          if (ects < TARGET_ECTS) spawnItem('ects');
         } else if (item.type === 'coffee') {
-          coffeesDrunk++;
-          coffeeTurboTime = 5; // 5 sekund turbo
+          coffeesDrunk += 1;
+          coffeeBoostTime = 6; // 6 sekund boostu
           stamina = maxStamina;
-          playSound('coffee');
+          if (window.soundSystem) window.soundSystem.play('coffee');
           items.splice(i, 1);
-          triggerProfQuote('„Czy ten esej pisał Pan, czy ChatGPT?!”');
-          setTimeout(() => spawnItem('coffee'), 12000);
-        } else if (item.type === 'gemini') {
-          geminiUsed++;
-          freezeTimer = 3.5; // 3.5 sekundy cyber-paraliżu profesora przez AI
-          playSound('freeze');
+          spawnItem('coffee');
+          showProfQuote('„Czy to kawa z bufetu ALK?! I tak Pana dogonię!”');
+        } else if (item.type === 'lion') {
+          ects = Math.min(TARGET_ECTS, ects + 3);
+          if (window.soundSystem) window.soundSystem.play('shield');
           items.splice(i, 1);
-          triggerProfQuote('„Błąd systemowy AI! Mój czerwony długopis został sparaliżowany!”');
-          setTimeout(() => spawnItem('gemini'), 18000);
-        } else if (item.type === 'card') {
-          hasShield = true;
-          playSound('shield');
+          showProfQuote('„Złoty Lew Koźmińskiego?! Dobre osiągnięcie, ale wciąż sprawdzam indeks!”');
+          setTimeout(() => spawnItem('lion'), 20000);
+        } else if (item.type === 'freeze') {
+          if (isUltraRetro) {
+            freezeTimer = 7.0;
+            if (window.soundSystem) window.soundSystem.play('newspaper');
+            const q = NEWSPAPER_QUOTES[Math.floor(Math.random() * NEWSPAPER_QUOTES.length)];
+            showProfQuote(q, 'newspaper');
+            floatingTexts.push({
+              x: item.x,
+              y: item.y - 15,
+              text: '📰 ŚWIEŻA GAZETA! PROFESOR CZYTA!',
+              color: '#fbbf24',
+              life: 1.6,
+            });
+            for (let p = 0; p < 12; p++) {
+              particles.push({
+                x: item.x,
+                y: item.y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                color: ['#f8fafc', '#cbd5e1', '#f59e0b', '#fde047'][Math.floor(Math.random() * 4)],
+                size: 3,
+                life: 0.8,
+                decay: 0.03,
+              });
+            }
+          } else {
+            freezeTimer = 6.0;
+            if (window.soundSystem) window.soundSystem.play('freeze');
+            const q = GEMINI_QUOTES[Math.floor(Math.random() * GEMINI_QUOTES.length)];
+            showProfQuote(q, 'freeze');
+            floatingTexts.push({
+              x: item.x,
+              y: item.y - 15,
+              text: '✨ GEMINI AI: PARALIŻ PROFESORA!',
+              color: '#38bdf8',
+              life: 1.6,
+            });
+            for (let p = 0; p < 12; p++) {
+              particles.push({
+                x: item.x,
+                y: item.y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                color: ['#38bdf8', '#a855f7', '#60a5fa', '#fbcfe8'][Math.floor(Math.random() * 4)],
+                size: 3,
+                life: 0.8,
+                decay: 0.03,
+              });
+            }
+          }
           items.splice(i, 1);
-          triggerProfQuote('„Widzę ważną legitymację ALK! Ma Pan jeszcze jedną szansę!”');
-          setTimeout(() => spawnItem('card'), 22000);
+          setTimeout(() => spawnItem('freeze'), 18000);
         }
 
-        // Warunek triumfu
+        // Warunek wygranej
         if (ects >= TARGET_ECTS) {
           triggerVictory();
           return;
@@ -664,7 +788,7 @@
       }
     }
 
-    // Aktualizacja cząsteczek
+    // Cząsteczki
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.x += p.vx;
@@ -678,16 +802,16 @@
     updateHUD();
   }
 
-  // --- Rysowanie Sceny Canvas (800x540) ---
+  // --- Rysowanie planszy ALK ---
   function render() {
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // 1. Tło korytarzy ALK
-    ctx.fillStyle = '#0a1128';
+    // 1. Tło korytarzy uczelni (kafelki)
+    ctx.fillStyle = '#0a2238';
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Kafelki podłogowe korytarza
-    ctx.strokeStyle = 'rgba(0, 75, 135, 0.22)';
+    // Siatka korytarza
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
     ctx.lineWidth = 1;
     for (let x = 0; x < CANVAS_WIDTH; x += 40) {
       ctx.beginPath();
@@ -702,332 +826,523 @@
       ctx.stroke();
     }
 
-    // 2. Centralny plac: Patio ALK 🌿
-    ctx.fillStyle = '#1b4324';
-    ctx.fillRect(PATIO.x, PATIO.y, PATIO.w, PATIO.h);
+    // 2. Zielone Patio w centrum
+    ctx.fillStyle = '#1e4620';
+    ctx.fillRect(PATIO_AREA.x, PATIO_AREA.y, PATIO_AREA.w, PATIO_AREA.h);
 
-    // Kostka brukowa ścieżek krzyżowych na Patio
-    ctx.fillStyle = '#26384d';
-    ctx.fillRect(PATIO.x + PATIO.w / 2 - 24, PATIO.y, 48, PATIO.h);
-    ctx.fillRect(PATIO.x, PATIO.y + PATIO.h / 2 - 24, PATIO.w, 48);
+    // Ścieżki na patio
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(PATIO_AREA.x + PATIO_AREA.w / 2 - 20, PATIO_AREA.y, 40, PATIO_AREA.h);
+    ctx.fillRect(PATIO_AREA.x, PATIO_AREA.y + PATIO_AREA.h / 2 - 20, PATIO_AREA.w, 40);
 
-    // Ozdobna trawa i kępki zieleni
-    ctx.fillStyle = 'rgba(74, 222, 128, 0.2)';
-    for (let i = 0; i < 28; i++) {
-      const gx = PATIO.x + 15 + ((i * 43) % (PATIO.w - 30));
-      const gy = PATIO.y + 15 + ((i * 37) % (PATIO.h - 30));
-      ctx.fillRect(gx, gy, 5, 5);
+    // Trawa na patio - subtelny wzór
+    ctx.fillStyle = 'rgba(76, 175, 80, 0.15)';
+    for (let i = 0; i < 24; i++) {
+      const px = PATIO_AREA.x + 15 + ((i * 47) % (PATIO_AREA.w - 30));
+      const py = PATIO_AREA.y + 15 + ((i * 31) % (PATIO_AREA.h - 30));
+      ctx.fillRect(px, py, 6, 6);
     }
 
-    // Etykieta centralna: Patio ALK 🌿
-    ctx.font = '700 13px "Space Grotesk", sans-serif';
-    ctx.fillStyle = '#86efac';
+    // Cokół i rzeźba Lwa ALK w środku patio
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(380, 250, 40, 40);
+    ctx.strokeStyle = '#f5a623';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(380, 250, 40, 40);
+
+    ctx.font = '22px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Patio ALK 🌿', PATIO.x + PATIO.w / 2, PATIO.y + 24);
-
-    // Cokół i monument Lwa Koźmińskiego w centrum
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(382, 252, 36, 36);
-    ctx.strokeStyle = '#f2a900';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(382, 252, 36, 36);
-
-    ctx.font = '20px sans-serif';
     ctx.fillText('🦁', 400, 270);
 
-    // 3. Strefy i etykiety sal: „Aula A”, „Biblioteka”, „Dziekanat”, „Lab Komputerowy”
-    for (const room of ROOMS) {
-      // Podświetlenie posadzki sali
-      ctx.fillStyle = 'rgba(0, 75, 135, 0.16)';
-      ctx.fillRect(room.boxX, room.boxY, room.boxW, room.boxH);
+    // Podpisy sektorów kampusu
+    ctx.font = '10px "Space Grotesk", sans-serif';
+    ctx.fillStyle = 'rgba(245, 166, 35, 0.45)';
+    ctx.fillText('SEKTOR A &bull; AULA GŁÓWNA', 90, 35);
+    ctx.fillText('SEKTOR B &bull; BIBLIOTEKA ALK', 710, 35);
+    ctx.fillText('SEKTOR C &bull; BUFET & DZIEKANAT', 100, 515);
+    ctx.fillText('SEKTOR D &bull; KOLEGIUM ZARZĄDZANIA', 710, 515);
+    ctx.fillText('ZIELONE PATIO ALK', 400, 160);
 
-      // Przerywana linia progu oznaczająca otwarte przejścia do sali
-      ctx.save();
-      ctx.strokeStyle = 'rgba(242, 169, 0, 0.35)';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([6, 6]);
-      ctx.strokeRect(room.boxX, room.boxY, room.boxW, room.boxH);
-      ctx.restore();
-
-      // Tabliczka z nazwą sali
-      ctx.fillStyle = 'rgba(0, 34, 68, 0.85)';
-      ctx.fillRect(room.x - 52, room.y - 56, 104, 26);
-      ctx.strokeStyle = 'rgba(242, 169, 0, 0.45)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(room.x - 52, room.y - 56, 104, 26);
-
-      ctx.font = '700 12px "Space Grotesk", sans-serif';
-      ctx.fillStyle = room.color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(room.name, room.x, room.y - 43);
-    }
-
-    // 4. Ściany i aule z obramowaniami
+    // 3. Ściany i kolumny
     for (const wall of WALLS) {
-      if (wall.isMonument) continue;
+      if (wall.x === 380 && wall.y === 250) continue; // pomnik narysowany osobno
 
-      ctx.fillStyle = '#002244';
+      ctx.fillStyle = '#061626';
       ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
 
-      ctx.strokeStyle = '#f2a900';
+      ctx.strokeStyle = 'rgba(245, 166, 35, 0.35)';
       ctx.lineWidth = 1.5;
       ctx.strokeRect(wall.x, wall.y, wall.w, wall.h);
 
-      // Wewnętrzne wypełnienie akcentem niebieskim ALK
-      ctx.fillStyle = 'rgba(0, 75, 135, 0.5)';
-      ctx.fillRect(wall.x + 2, wall.y + 2, Math.max(0, wall.w - 4), Math.max(0, wall.h - 4));
+      // Akcenty narożników
+      ctx.fillStyle = '#0d4470';
+      ctx.fillRect(wall.x + 2, wall.y + 2, wall.w - 4, wall.h - 4);
     }
 
-    // 5. Rysowanie przedmiotów (ECTS, Kawa, Gemini AI, Legitymacja ALK)
+    // 4. Przedmioty na planszy (Indeksy ECTS, Kawa, Złoty Lew)
     const timeSec = Date.now() / 1000;
     for (const item of items) {
-      const bob = Math.sin(timeSec * 4.5 + item.bobOffset) * 3;
+      const bob = Math.sin(timeSec * 4 + item.bobOffset) * 3;
       const iy = item.y + bob;
 
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
       if (item.type === 'ects') {
-        // 📜 ECTS
-        ctx.fillStyle = 'rgba(242, 169, 0, 0.25)';
-        ctx.beginPath();
-        ctx.arc(item.x, iy, 14, 0, Math.PI * 2);
-        ctx.fill();
+        // Książka / Indeks ECTS
+        ctx.fillStyle = '#1e3a8a';
+        ctx.fillRect(item.x - 9, iy - 11, 18, 22);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(item.x - 7, iy - 9, 14, 4);
 
-        ctx.font = '18px sans-serif';
-        ctx.fillText('📜', item.x, iy);
+        ctx.font = '10px "Space Grotesk", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('📘', item.x, iy);
 
-        ctx.font = '700 9px "Space Grotesk", sans-serif';
-        ctx.fillStyle = '#ffc740';
-        ctx.fillText('+1 ECTS', item.x, iy + 14);
+        // Subtelna poświata
+        ctx.strokeStyle = 'rgba(245, 166, 35, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(item.x - 10, iy - 12, 20, 24);
       } else if (item.type === 'coffee') {
-        // ☕ Kawa z Patio ALK
-        ctx.fillStyle = 'rgba(0, 163, 255, 0.2)';
-        ctx.beginPath();
-        ctx.arc(item.x, iy, 14, 0, Math.PI * 2);
-        ctx.fill();
-
+        // Espresso z bufetu
         ctx.font = '18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         ctx.fillText('☕', item.x, iy);
 
-        ctx.font = '700 8px "Space Grotesk", sans-serif';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('TURBO', item.x, iy + 14);
-      } else if (item.type === 'gemini') {
-        // 💻 Gemini AI
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+        // Para nad kawą
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
         ctx.beginPath();
-        ctx.arc(item.x, iy, 16, 0, Math.PI * 2);
+        ctx.arc(item.x, iy - 14, 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (item.type === 'lion') {
+        // Złoty Lew ALK (+3 ECTS)
+        ctx.fillStyle = 'rgba(245, 166, 35, 0.25)';
+        ctx.beginPath();
+        ctx.arc(item.x, iy, 18, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.font = '18px sans-serif';
-        ctx.fillText('💻', item.x, iy);
+        ctx.font = '22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⭐', item.x, iy);
+      } else if (item.type === 'freeze') {
+        if (isUltraRetro) {
+          // Gazeta Codzienna (Ultra-Retro)
+          ctx.save();
+          ctx.translate(item.x, iy);
 
-        ctx.font = '700 8px "Space Grotesk", sans-serif';
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillText('GEMINI AI', item.x, iy + 14);
-      } else if (item.type === 'card') {
-        // 🪪 Legitymacja ALK (Tarcza)
-        ctx.fillStyle = 'rgba(242, 169, 0, 0.35)';
-        ctx.beginPath();
-        ctx.arc(item.x, iy, 16, 0, Math.PI * 2);
-        ctx.fill();
+          // Poświata retro
+          ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
+          ctx.beginPath();
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
+          ctx.fill();
 
-        ctx.font = '18px sans-serif';
-        ctx.fillText('🪪', item.x, iy);
+          // Płachta złożonej gazety
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(-11, -8, 22, 16);
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(-11, -8, 22, 16);
 
-        ctx.font = '700 8px "Space Grotesk", sans-serif';
-        ctx.fillStyle = '#ffc740';
-        ctx.fillText('TARCZA', item.x, iy + 14);
+          // Zagięcie pionowe
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(-0.5, -8, 1, 16);
+
+          // Winieta tytułowa prasy
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(-10, -7, 20, 3.5);
+
+          // Kolumny tekstu
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(-9, -2, 7, 1.2);
+          ctx.fillRect(-9, 1, 6, 1.2);
+          ctx.fillRect(-9, 4, 7, 1.2);
+          ctx.fillRect(2, -2, 7, 1.2);
+          ctx.fillRect(2, 1, 6, 1.2);
+          ctx.fillRect(2, 4, 7, 1.2);
+
+          // Ikonka gazety
+          ctx.font = '11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('📰', 0, -12);
+
+          ctx.restore();
+        } else {
+          // Gemini AI (Tryb Nowoczesny)
+          ctx.save();
+          ctx.translate(item.x, iy);
+
+          const pulse = Math.sin(timeSec * 5) * 2;
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+          ctx.beginPath();
+          ctx.arc(0, 0, 15 + pulse, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Diamentowy chip Gemini
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.moveTo(0, -10);
+          ctx.lineTo(10, 0);
+          ctx.lineTo(0, 10);
+          ctx.lineTo(-10, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.font = '12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('✨', 0, 0);
+
+          ctx.restore();
+        }
       }
     }
 
-    // 6. Cząsteczki
+    // 5. Cząsteczki
     for (const p of particles) {
       ctx.fillStyle = p.color;
-      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.globalAlpha = p.life;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1.0;
 
-    // 7. Renderowanie Gracza (Student)
-    drawStudent(player.x, player.y, player.facing, player.walkCycle, isSprinting, coffeeTurboTime > 0, hasShield);
+    // 6. Rysowanie Gracza (Student)
+    drawStudent(player.x, player.y, player.facing, player.walkCycle, isSprinting, coffeeBoostTime > 0);
 
-    // 8. Renderowanie Egzaminatora (Profesor z czerwonym długopisem)
-    drawExaminer(examiner.x, examiner.y, examiner.facing, examiner.walkCycle, freezeTimer > 0);
+    // 7. Rysowanie Egzaminatora (Profesor z czerwonym długopisem)
+    drawExaminer(examiner.x, examiner.y, examiner.facing, examiner.walkCycle);
+
+    // 8. Pływające teksty (bonusy ze ściągania, power-upy)
+    for (const ft of floatingTexts) {
+      ctx.save();
+      ctx.font = 'bold 12px "Space Grotesk", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = Math.min(1, ft.life);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#000000';
+      ctx.strokeText(ft.text, ft.x, ft.y);
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    }
   }
 
-  // --- Student (Ty) z bluzą ALK i opcjonalną tarczą Legitymacji ---
-  function drawStudent(x, y, facing, cycle, sprinting, turbo, shieldActive) {
+  // --- Wizualizacja Gracza (Student w bluzie ALK z plecakiem) ---
+  function drawStudent(x, y, facing, cycle, sprinting, buffed) {
     ctx.save();
     ctx.translate(x, y);
 
-    // Efekt Tarczy Legitymacji ALK
-    if (shieldActive) {
-      const shieldRot = (Date.now() / 200) % (Math.PI * 2);
-      ctx.save();
-      ctx.rotate(shieldRot);
-      ctx.strokeStyle = '#f2a900';
-      ctx.lineWidth = 2.5;
-      ctx.setLineDash([8, 6]);
+    // Poświata sprintu lub kawy
+    if (buffed) {
+      ctx.fillStyle = 'rgba(245, 166, 35, 0.3)';
       ctx.beginPath();
-      ctx.arc(0, 0, 22, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(242, 169, 0, 0.15)';
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // Poświata Turbo / Sprintu
-    if (turbo) {
-      ctx.fillStyle = 'rgba(255, 199, 64, 0.35)';
-      ctx.beginPath();
-      ctx.arc(0, 0, 18, 0, Math.PI * 2);
+      ctx.arc(0, 0, 20, 0, Math.PI * 2);
       ctx.fill();
     } else if (sprinting) {
-      ctx.fillStyle = 'rgba(0, 163, 255, 0.25)';
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
       ctx.beginPath();
-      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.arc(0, 0, 18, 0, Math.PI * 2);
       ctx.fill();
     }
 
     // Cień
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.beginPath();
-    ctx.ellipse(0, 11, 10, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 12, 10, 5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Ciało - Bluza uczelniana ALK (Główny granat #002244)
-    ctx.fillStyle = '#002244';
-    ctx.fillRect(-7, -4, 14, 15);
+    // Ciało (Granatowa bluza ALK)
+    ctx.fillStyle = '#002b49';
+    ctx.fillRect(-8, -4, 16, 16);
 
-    // Złoty herb/napis ALK
-    ctx.fillStyle = '#f2a900';
+    // Logo ALK na plecach/klatce
+    ctx.fillStyle = '#f5a623';
     ctx.fillRect(-3, 0, 6, 4);
 
-    // Plecak studenta
+    // Plecak
     ctx.fillStyle = '#475569';
-    if (facing === 'down') ctx.fillRect(-5, -2, 10, 5);
-    else if (facing === 'up') ctx.fillRect(-6, -4, 12, 8);
-    else if (facing === 'left') ctx.fillRect(2, -3, 5, 10);
-    else ctx.fillRect(-7, -3, 5, 10);
+    if (facing === 'down') ctx.fillRect(-6, -2, 12, 6);
+    else if (facing === 'up') ctx.fillRect(-7, -4, 14, 10);
+    else if (facing === 'left') ctx.fillRect(2, -3, 6, 12);
+    else ctx.fillRect(-8, -3, 6, 12);
 
     // Głowa
     ctx.fillStyle = '#fbcfe8';
     ctx.beginPath();
-    ctx.arc(0, -9, 7.5, 0, Math.PI * 2);
+    ctx.arc(0, -9, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    // Czapka studencka / biret ALK
-    ctx.fillStyle = '#0a1128';
-    ctx.fillRect(-8, -15, 16, 5);
-    ctx.fillStyle = '#f2a900';
-    ctx.fillRect(4, -13, 2, 7); // chwost
+    // Czapka studencka / biret
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-9, -15, 18, 5);
+    ctx.fillStyle = '#f5a623';
+    ctx.fillRect(4, -13, 2, 8); // chwościk biretu
 
-    // Nóżki i animacja biegu
-    const leg = Math.sin(cycle) * 3.5;
-    ctx.fillStyle = '#004b87';
-    ctx.fillRect(-5, 11, 3.5, 5 + (facing === 'left' || facing === 'right' ? leg : 0));
-    ctx.fillRect(1.5, 11, 3.5, 5 - (facing === 'left' || facing === 'right' ? leg : 0));
+    // Nóżki / Animacja kroków
+    const legOffset = Math.sin(cycle) * 4;
+    ctx.fillStyle = '#1e3a8a';
+    ctx.fillRect(-6, 11, 4, 6 + (facing === 'left' || facing === 'right' ? legOffset : 0));
+    ctx.fillRect(2, 11, 4, 6 - (facing === 'left' || facing === 'right' ? legOffset : 0));
 
     ctx.restore();
   }
 
-  // --- Egzaminator (Profesor z czerwonym długopisem) ---
-  function drawExaminer(x, y, facing, cycle, isFrozen) {
+  // --- Wizualizacja Egzaminatora (Garnitur, okulary, czerwony długopis LUB czytanie gazety) ---
+  function drawExaminer(x, y, facing, cycle) {
     ctx.save();
     ctx.translate(x, y);
 
-    // Jeśli zamrożony przez Gemini AI - cybernetyczna aura lodowa
-    if (isFrozen) {
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+    // 1. Kiedy Egzaminator czyta gazetę w Trybie Ultra-Retro! ("nie patrzy czy Studenci ściągają")
+    if (freezeTimer > 0 && isUltraRetro) {
+      // Spokojna, ciepła aura zaczytanego profesora
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.22)';
       ctx.beginPath();
-      ctx.arc(0, 0, 24, 0, Math.PI * 2);
+      ctx.arc(0, 0, 26, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2;
+      // Cień
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(0, 14, 12, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Nóżki stojące spokojnie w miejscu
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(-7, 12, 4, 6);
+      ctx.fillRect(3, 12, 4, 6);
+
+      // Ciało: elegancki ciemnoszary garnitur profesora
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(-9, -4, 18, 17);
+
+      // Głowa lekko widoczna zza gazety
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.arc(0, -10, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Siwe profesorskie włosy
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.arc(0, -13, 9, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      // Okulary zsunięte na nos (spojrzenie wbite w tekst gazety)
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-5, -10, 4, 3);
+      ctx.strokeRect(1, -10, 4, 3);
+
+      // DUŻA ROZŁOŻONA RETRO GAZETA W DŁONIACH (Zasłania całą twarz i pole widzenia!)
+      const paperSway = Math.sin(Date.now() / 350) * 1;
+      const paperY = -5 + paperSway;
+
+      // Płachta gazety (wielkoformatowa broadsheet '96)
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-18, paperY, 36, 24);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-18, paperY, 36, 24);
+
+      // Zgięcie pionowe na pół
+      ctx.strokeStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.moveTo(0, paperY);
+      ctx.lineTo(0, paperY + 24);
       ctx.stroke();
 
-      ctx.font = '16px sans-serif';
+      // Czarna winieta tytułowa prasy
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-16, paperY + 2, 32, 4.5);
+
+      // Tytuł gazety
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 3.5px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('❄️', 0, -24);
-    } else {
-      // Groźna aura czerwonego długopisu
-      ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
-      ctx.beginPath();
-      ctx.arc(0, 0, 22, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillText('RZECZPOSPOLITA', 0, paperY + 5.5);
+
+      // Kolumny tekstu (poziome kreseczki prasy)
+      ctx.fillStyle = '#334155';
+      for (let row = 0; row < 4; row++) {
+        ctx.fillRect(-15, paperY + 8 + row * 3.2, 12, 1.2);
+        ctx.fillRect(3, paperY + 8 + row * 3.2, 12, 1.2);
+      }
+
+      // Kwadracik krzyżówki / notowań w rogu
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(9, paperY + 15, 6, 6);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(9, paperY + 15, 6, 6);
+
+      // Dłonie trzymające gazetę po bokach
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(-20, paperY + 8, 3, 8);
+      ctx.fillRect(17, paperY + 8, 3, 8);
+
+      // Mankiety garnituru
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(-21, paperY + 7, 2, 10);
+      ctx.fillRect(19, paperY + 7, 2, 10);
+
+      // Czerwony długopis wetknięty bezpiecznie w kieszonkę
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-8, paperY + 3, 2, 4);
+
+      // Ikonka czytania prasy nad głową profesora
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('📰', 0, -22);
+
+      ctx.restore();
+      return;
     }
 
+    // 2. Kiedy Egzaminator jest sparaliżowany przez Gemini AI (Tryb Nowoczesny)
+    if (freezeTimer > 0 && !isUltraRetro) {
+      // Cyjanowa cybernetyczna aura paraliżu
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.3)';
+      ctx.beginPath();
+      ctx.arc(0, 0, 26, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cień
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(0, 14, 12, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sylwetka garnituru
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(-9, -4, 18, 17);
+
+      // Krawat
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-2, -3, 4, 11);
+
+      // Głowa i siwe włosy
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.arc(0, -10, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.arc(0, -13, 9, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      // Okulary
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-5, -12, 4, 3);
+      ctx.strokeRect(1, -12, 4, 3);
+
+      // Nóżki stoją w miejscu
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(-7, 12, 4, 6);
+      ctx.fillRect(3, 12, 4, 6);
+
+      // Długopis w dłoni
+      const penX = facing === 'left' ? -15 : 12;
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(penX, -4);
+      ctx.lineTo(penX + 4, 8);
+      ctx.stroke();
+
+      // Krążące gwiazdki Gemini wokół głowy
+      const spin = (Date.now() / 250) % (Math.PI * 2);
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✨', Math.cos(spin) * 14, -20 + Math.sin(spin) * 5);
+      ctx.fillText('💫', Math.cos(spin + Math.PI) * 14, -20 + Math.sin(spin + Math.PI) * 5);
+
+      ctx.restore();
+      return;
+    }
+
+    // 3. Normalny stan: Egzaminator ściga studenta z czerwonym długopisem!
+    // Czerwona groźna aura egzaminatora
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.16)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 24, 0, Math.PI * 2);
+    ctx.fill();
+
     // Cień
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.beginPath();
-    ctx.ellipse(0, 13, 11, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 14, 12, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Garnitur profesora
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(-8, -4, 16, 16);
+    // Sylwetka: elegancki ciemnoszary garnitur profesora
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(-9, -4, 18, 17);
 
-    // Czerwony krawat
+    // Krawat
     ctx.fillStyle = '#dc2626';
-    ctx.fillRect(-2, -3, 4, 10);
+    ctx.fillRect(-2, -3, 4, 11);
 
-    // Głowa
-    ctx.fillStyle = '#fde047';
+    // Głowa i siwe włosy
+    ctx.fillStyle = '#fde047'; // karnacja
     ctx.beginPath();
-    ctx.arc(0, -9, 8, 0, Math.PI * 2);
+    ctx.arc(0, -10, 8.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Siwe włosy profesorskie
-    ctx.fillStyle = '#cbd5e1';
+    // Siwe profesorskie włosy
+    ctx.fillStyle = '#94a3b8';
     ctx.beginPath();
-    ctx.arc(0, -12, 8.5, Math.PI, Math.PI * 2);
+    ctx.arc(0, -13, 9, Math.PI, Math.PI * 2);
     ctx.fill();
 
-    // Okulary
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 1.4;
-    ctx.strokeRect(-5, -11, 4, 3);
-    ctx.strokeRect(1, -11, 4, 3);
+    // Okulary profesorskie
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(-5, -12, 4, 3);
+    ctx.strokeRect(1, -12, 4, 3);
 
     // Nóżki
-    const leg = isFrozen ? 0 : Math.sin(cycle) * 3;
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(-6, 12, 3.5, 5 + leg);
-    ctx.fillRect(2.5, 12, 3.5, 5 - leg);
+    const legOffset = Math.sin(cycle) * 3;
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(-7, 12, 4, 6 + legOffset);
+    ctx.fillRect(3, 12, 4, 6 - legOffset);
 
-    // SŁYNNY CZERWONY DŁUGOPIS
-    const penPulse = isFrozen ? 0 : Math.sin(Date.now() / 140) * 2;
-    const penX = facing === 'left' ? -14 : 12;
-    const penY = penPulse;
+    // SŁYNNY CZERWONY DŁUGOPIS W DŁONI PROFESORA
+    const penPulse = Math.sin(Date.now() / 150) * 2;
+    const penX = facing === 'left' ? -15 : 12;
+    const penY = 0;
 
-    ctx.fillStyle = '#ef4444';
+    // Poświata czerwonego wkładu
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
     ctx.beginPath();
-    ctx.arc(penX + 2, penY, 5, 0, Math.PI * 2);
+    ctx.arc(penX + 2, penY + penPulse, 6, 0, Math.PI * 2);
     ctx.fill();
 
+    // Rysik długopisu
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(penX, penY - 4);
-    ctx.lineTo(penX + 3, penY + 7);
+    ctx.moveTo(penX, penY - 4 + penPulse);
+    ctx.lineTo(penX + 4, penY + 8 + penPulse);
     ctx.stroke();
 
     ctx.restore();
   }
 
-  // --- Główna pętla renderowania (60 FPS) ---
-  let lastTime = performance.now();
-  function gameLoop(now) {
-    const dt = Math.min(0.08, (now - lastTime) / 1000);
-    lastTime = now;
+  // --- Główna pętla gry ---
+  let lastFrameTime = performance.now();
+  function gameLoop(currentTime) {
+    const dt = Math.min(0.1, (currentTime - lastFrameTime) / 1000);
+    lastFrameTime = currentTime;
 
     update(dt);
     render();
@@ -1035,27 +1350,33 @@
     requestAnimationFrame(gameLoop);
   }
 
-  // --- Obsługa Klawiatury (WASD / Strzałki / Spacja / Shift) ---
+  // --- Obsługa sterowania klawiaturą ---
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'Space') {
-      input.sprint = true;
-      e.preventDefault();
+    // Spacja lub Shift do sprintu
+    if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      keys.sprint = true;
     }
     if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-      input.up = true;
+      keys.up = true;
       e.preventDefault();
     }
     if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-      input.down = true;
+      keys.down = true;
       e.preventDefault();
     }
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-      input.left = true;
+      keys.left = true;
       e.preventDefault();
     }
     if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-      input.right = true;
+      keys.right = true;
       e.preventDefault();
+    }
+    if (e.key === 'r' || e.key === 'R') {
+      setUltraRetroMode(!isUltraRetro);
+      if (window.soundSystem) {
+        window.soundSystem.play(isUltraRetro ? 'newspaper' : 'freeze');
+      }
     }
     if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
       togglePause();
@@ -1063,47 +1384,47 @@
   });
 
   window.addEventListener('keyup', (e) => {
-    if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'Space') {
-      input.sprint = false;
+    if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      keys.sprint = false;
     }
-    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') input.up = false;
-    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') input.down = false;
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') input.left = false;
-    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') input.right = false;
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.up = false;
+    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = false;
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
   });
 
-  // --- Obsługa Wirtualnego Sterowania Dotykowego (#mobile-controls) ---
-  function setupTouchButton(el, keyProp) {
-    if (!el) return;
-    const activate = (e) => {
+  // --- Obsługa wirtualnego sterowania dotykowego (D-Pad & Sprint) ---
+  function bindTouchButton(btn, keyProp) {
+    if (!btn) return;
+    const startHandler = (e) => {
       e.preventDefault();
-      input[keyProp] = true;
-      el.classList.add('active');
+      keys[keyProp] = true;
+      btn.classList.add('active');
     };
-    const deactivate = (e) => {
+    const endHandler = (e) => {
       e.preventDefault();
-      input[keyProp] = false;
-      el.classList.remove('active');
+      keys[keyProp] = false;
+      btn.classList.remove('active');
     };
 
-    el.addEventListener('pointerdown', activate);
-    el.addEventListener('pointerup', deactivate);
-    el.addEventListener('pointercancel', deactivate);
-    el.addEventListener('pointerleave', deactivate);
+    btn.addEventListener('pointerdown', startHandler);
+    btn.addEventListener('pointerup', endHandler);
+    btn.addEventListener('pointercancel', endHandler);
+    btn.addEventListener('pointerleave', endHandler);
   }
 
-  setupTouchButton(dpadUp, 'up');
-  setupTouchButton(dpadDown, 'down');
-  setupTouchButton(dpadLeft, 'left');
-  setupTouchButton(dpadRight, 'right');
-  setupTouchButton(touchSprint, 'sprint');
+  bindTouchButton(dpadUp, 'up');
+  bindTouchButton(dpadDown, 'down');
+  bindTouchButton(dpadLeft, 'left');
+  bindTouchButton(dpadRight, 'right');
+  bindTouchButton(touchSprint, 'sprint');
 
-  // --- Pauza i Wyciszenie Dźwięku ---
+  // --- Dźwięk i Pauza ---
   function togglePause() {
     if (gameState === 'PLAYING') {
       gameState = 'PAUSED';
       if (pauseIcon) pauseIcon.textContent = '▶️';
-      if (statusText) statusText.textContent = 'Pauza. Kliknij P lub ikonę, by wznowić sesję!';
+      if (statusText) statusText.textContent = 'Pauza. Naciśnij P lub ikonę, by wznowić.';
     } else if (gameState === 'PAUSED') {
       gameState = 'PLAYING';
       if (pauseIcon) pauseIcon.textContent = '⏸️';
@@ -1112,8 +1433,9 @@
 
   if (soundToggleBtn) {
     soundToggleBtn.addEventListener('click', () => {
-      if (window.soundSystem) {
-        const isMuted = window.soundSystem.toggleMute();
+      const audio = window.soundSystem || window.gameAudio;
+      if (audio) {
+        const isMuted = audio.toggleMute();
         soundIcon.textContent = isMuted ? '🔇' : '🔊';
       }
     });
@@ -1123,13 +1445,32 @@
     pauseToggleBtn.addEventListener('click', togglePause);
   }
 
-  // --- Podpięcie Przycisków w Oknach Modalnych ---
+  if (retroToggleBtn) {
+    retroToggleBtn.addEventListener('click', () => {
+      setUltraRetroMode(!isUltraRetro);
+      if (window.soundSystem) {
+        window.soundSystem.play(isUltraRetro ? 'newspaper' : 'freeze');
+      }
+    });
+  }
+
+  if (retroModeCheckbox) {
+    retroModeCheckbox.addEventListener('change', (e) => {
+      setUltraRetroMode(e.target.checked);
+      if (window.soundSystem) {
+        window.soundSystem.play(isUltraRetro ? 'newspaper' : 'freeze');
+      }
+    });
+  }
+
+  // --- Podpięcie przycisków w oknach modalnych ---
   if (startGameBtn) startGameBtn.addEventListener('click', startGame);
   if (restartGameBtn) restartGameBtn.addEventListener('click', startGame);
   if (playAgainBtn) playAgainBtn.addEventListener('click', startGame);
 
-  // Pierwsza inicjalizacja planszy i pętli
-  initCampusItems();
+  // Pierwsza inicjalizacja
+  setUltraRetroMode(isUltraRetro);
+  initItems();
   updateHUD();
   requestAnimationFrame(gameLoop);
 })();
