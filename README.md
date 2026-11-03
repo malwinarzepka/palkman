@@ -61,7 +61,7 @@ W widokach poniżej 768px na dole ekranu automatycznie aktywuje się ergonomiczn
 
 ## 🛫 Odpalanie gierki:
 - Pobierz całe repozytorium, rozpakuj i uruchom index.html za pomocą dowolnej przeglądarki. 
-- 
+
 
 ---
 
