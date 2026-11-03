@@ -248,6 +248,28 @@ html, body {
   text-overflow: ellipsis;
 }
 
+.status-retro-freeze {
+  border-color: #f59e0b !important;
+  background: rgba(180, 83, 9, 0.35) !important;
+}
+
+.status-retro-freeze .status-dot {
+  background-color: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+  animation: pulse-dot 0.45s infinite alternate;
+}
+
+.status-freeze {
+  border-color: #38bdf8 !important;
+  background: rgba(14, 165, 233, 0.3) !important;
+}
+
+.status-freeze .status-dot {
+  background-color: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: pulse-dot 0.45s infinite alternate;
+}
+
 .status-dot {
   width: 7px;
   height: 7px;
@@ -293,6 +315,64 @@ html, body {
   border-color: var(--alk-gold);
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 4px 12px rgba(242, 169, 0, 0.3);
+}
+
+/* Przycisk Trybu Retro w HUD */
+.retro-toggle-btn {
+  width: auto;
+  min-width: 58px;
+  padding: 0 9px;
+  gap: 5px;
+  border-color: rgba(242, 169, 0, 0.45);
+}
+
+.retro-btn-label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: var(--alk-gold-light);
+}
+
+.retro-toggle-btn.active {
+  background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+  border-color: #fde047;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.75);
+}
+
+.retro-toggle-btn.active .retro-btn-label {
+  color: #fff;
+  text-shadow: 0 0 6px rgba(253, 224, 71, 0.8);
+}
+
+/* Plakietka retro w brandingu ALK */
+.retro-hud-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e1b4b;
+  border: 1px solid #f59e0b;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.8px;
+  margin-left: 8px;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+
+.retro-hud-badge.hidden {
+  display: none !important;
+}
+
+.retro-badge-glitch {
+  background: #d97706;
+  color: #ffffff;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 8px;
 }
 
 /* ==========================================================================
@@ -577,6 +657,114 @@ canvas#gameCanvas {
   font-size: 13px;
   line-height: 1.5;
   color: #e2e8f0;
+}
+
+/* Karta przełącznika Trybu Ultra-Retro */
+.retro-mode-toggle-card {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.75) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.5);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+}
+
+.retro-mode-toggle-card:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+}
+
+.retro-toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.retro-toggle-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.retro-switch-track {
+  width: 48px;
+  height: 26px;
+  background-color: #334155;
+  border-radius: 14px;
+  position: relative;
+  transition: background-color 0.25s ease;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.retro-switch-thumb {
+  width: 20px;
+  height: 20px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.retro-toggle-switch input:checked + .retro-switch-track {
+  background-color: #d97706;
+  border-color: #fde047;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+}
+
+.retro-toggle-switch input:checked + .retro-switch-track .retro-switch-thumb {
+  transform: translateX(21px);
+  background-color: #fef08a;
+}
+
+.retro-switch-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.retro-switch-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.6px;
+}
+
+.retro-pill-status {
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.retro-toggle-switch input:checked ~ .retro-switch-content .retro-pill-status {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fde047;
+  border: 1px solid #f59e0b;
+}
+
+.retro-switch-subtitle {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #cbd5e1;
+}
+
+.legend-freeze-item {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(180, 83, 9, 0.18);
 }
 
 .legend-grid {
@@ -876,6 +1064,53 @@ canvas#gameCanvas {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.6px;
+}
+
+/* ==========================================================================
+   4. Efekty wizualne Trybu Ultra-Retro (Kineskop CRT, Scanlines, Retro-Glow)
+   ========================================================================== */
+.ultra-retro .canvas-wrapper {
+  border-color: #f59e0b;
+  box-shadow: 
+    0 0 35px rgba(245, 158, 11, 0.45), 
+    0 20px 50px rgba(0, 0, 0, 0.9),
+    inset 0 0 30px rgba(0, 0, 0, 0.7);
+}
+
+/* Linie kineskopu (Scanlines) */
+.ultra-retro .canvas-wrapper::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.28) 50%),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.03));
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.85;
+}
+
+/* Winieta zaokrąglonego ekranu kineskopowego */
+.ultra-retro .canvas-wrapper::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 68%, rgba(0, 0, 0, 0.55) 100%);
+  pointer-events: none;
+  z-index: 11;
+}
+
+.ultra-retro .hud-bar {
+  border-color: #f59e0b;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65), 0 0 20px rgba(245, 158, 11, 0.35);
+}
+
+.ultra-retro .hud-bar::before {
+  background: #f59e0b;
+  box-shadow: 0 0 12px #f59e0b;
 }
 
 /* W widokach poniżej 768px włącz wyświetlanie ekranowych przycisków sterowania (#mobile-controls) */
