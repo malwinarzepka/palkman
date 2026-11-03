@@ -48,7 +48,7 @@ class SoundSystem {
 
   /**
    * Główny interfejs odtwarzania efektów dźwiękowych
-   * @param {'ects' | 'coffee' | 'shield' | 'freeze' | 'hit' | 'win'} type 
+   * @param {'ects' | 'coffee' | 'shield' | 'freeze' | 'newspaper' | 'cheat' | 'hit' | 'win'} type 
    */
   play(type) {
     if (this.isMuted) return;
@@ -67,6 +67,12 @@ class SoundSystem {
         break;
       case 'freeze':
         this.playFreeze();
+        break;
+      case 'newspaper':
+        this.playNewspaper();
+        break;
+      case 'cheat':
+        this.playCheat();
         break;
       case 'hit':
         this.playHit();
@@ -188,6 +194,77 @@ class SoundSystem {
   }
 
   // --------------------------------------------------------------------------
+  // 4b. 'newspaper': szelest rozkładanej retro gazety przez egzaminatora (Ultra-Retro)
+  // --------------------------------------------------------------------------
+  playNewspaper() {
+    const now = this.ctx.currentTime;
+    try {
+      // 1. Syntetyczny szelest papieru (modulowany szum pasmowoprzepustowy)
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.35);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.45));
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1400, now);
+      filter.frequency.linearRampToValueAtTime(800, now + 0.15);
+      filter.frequency.linearRampToValueAtTime(1800, now + 0.32);
+      filter.Q.value = 2.5;
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.24, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+      noise.start(now);
+    } catch (e) {
+      console.warn('[SoundSystem] Błąd szumu gazety:', e);
+    }
+
+    // 2. Ciepły retro dwuton aktywacji czytania (fala trójkątna)
+    const osc = this.ctx.createOscillator();
+    const oscGain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(392.00, now + 0.05); // G4
+    osc.frequency.setValueAtTime(523.25, now + 0.16); // C5
+    oscGain.gain.setValueAtTime(0.001, now);
+    oscGain.gain.linearRampToValueAtTime(0.18, now + 0.08);
+    oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
+
+    osc.connect(oscGain);
+    oscGain.connect(this.ctx.destination);
+    osc.start(now + 0.05);
+    osc.stop(now + 0.36);
+  }
+
+  // --------------------------------------------------------------------------
+  // 4c. 'cheat': sprytny dźwięk udanego ściągania pod okiem czytającego profesora
+  // --------------------------------------------------------------------------
+  playCheat() {
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(659.25, now); // E5
+    osc.frequency.setValueAtTime(880.00, now + 0.06); // A5
+    osc.frequency.setValueAtTime(1318.51, now + 0.12); // E6
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.22);
+  }
+
+  // --------------------------------------------------------------------------
   // 5. 'hit': faul/przegrana (dramatycznie opadający bas)
   // --------------------------------------------------------------------------
   playHit() {
@@ -244,22 +321,6 @@ class SoundSystem {
     });
   }
 
-  // --- Metody statyczne dla bezpośredniego wywołania SoundSystem.play(...) ---
-  static init() {
-    if (!window.soundSystem) window.soundSystem = new SoundSystem();
-    window.soundSystem.init();
-  }
-
-  static play(type) {
-    if (!window.soundSystem) window.soundSystem = new SoundSystem();
-    window.soundSystem.play(type);
-  }
-
-  static toggleMute() {
-    if (!window.soundSystem) window.soundSystem = new SoundSystem();
-    return window.soundSystem.toggleMute();
-  }
-
   // --- Kompatybilność z dotychczasowymi odwołaniami ---
   playPickupEcts() { this.play('ects'); }
   playCoffeeBoost() { this.play('coffee'); }
@@ -267,6 +328,8 @@ class SoundSystem {
   playGameOver() { this.play('hit'); }
   playVictory() { this.play('win'); }
   playProfessorAlert() { this.play('freeze'); }
+  playNewspaperRead() { this.play('newspaper'); }
+  playStudentCheating() { this.play('cheat'); }
 }
 
 // Globalne instancje modułu dźwiękowego
