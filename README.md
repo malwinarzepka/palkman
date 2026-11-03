@@ -9,7 +9,7 @@
 Trwa zimowa sesja egzaminacyjna. Korytarzami uczelni – od Auli A, przez Bibliotekę i Dziekanat, aż po słynne **zielone Patio ALK z pomnikiem Lwa** – krąży surowy **Profesor Egzaminator** uzbrojony w bezlitosny czerwony długopis. Każde bezpośrednie spotkanie grozi dopisaniem dwói i odesłaniem do legendarnej **Kampanii Wrześniowej**!
 
 ### Cel gry:
-- Zbierz **30 punktów ECTS**, aby zaliczyć semestr w pierwszym terminie i otrzymać wpis do indeksu z oceną Rektora (do 5.5).
+- Zbierz **30 punktów ECTS**, aby zaliczyć semestr w pierwszym terminie i otrzymać wpis do indeksu z oceną Rektora (do 5.0).
 - Uciekaj przed profesorem, który **przyspiesza z każdym zebranym przez Ciebie punktem ECTS**!
 
 ### Przedmioty na Kampusie:
@@ -58,6 +58,10 @@ W widokach poniżej 768px na dole ekranu automatycznie aktywuje się ergonomiczn
 - **Krzyżak D-pad** (po lewej stronie): Płynne sterowanie kierunkiem poruszania się.
 - **Przycisk SPRINT ⚡** (po prawej stronie): Przytrzymanie aktywuje bieg sprinterski.
 - **Interaktywny HUD**: Dotknięcie ikony głośnika wycisza lub włącza syntezator audio.
+
+## 🛫 Odpalanie gierki:
+- Pobierz całe repozytorium, rozpakuj i uruchom index.html za pomocą dowolnej przeglądarki. 
+- 
 
 ---
 
