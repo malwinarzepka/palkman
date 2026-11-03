@@ -17,8 +17,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
     
-    <!-- Style CSS (ścieżka względna dla działania lokalnego oraz na GitHub Pages) -->
-    <link rel="stylesheet" href="css/style.css" />
+    <!-- Style CSS -->
+    <link rel="stylesheet" href="./css/style.css" />
   </head>
   <body>
     <!-- Główny kontener aplikacji -->
@@ -34,6 +34,10 @@
               <span class="alk-name">ALK WARSZAWA</span>
               <span class="alk-campus">Budynek D &bull; Patio</span>
             </div>
+          </div>
+          <div id="retroHudBadge" class="retro-hud-badge hidden" title="Aktywny Tryb Ultra-Retro (Rocznik '96)">
+            <span class="retro-badge-glitch">1996</span>
+            <span>GAZETA MODE</span>
           </div>
         </div>
 
@@ -71,8 +75,12 @@
           </div>
         </div>
 
-        <!-- Szybkie kontrolki (Dźwięk, Pomoc) -->
+        <!-- Szybkie kontrolki (Tryb Ultra-Retro, Dźwięk, Pauza) -->
         <div class="hud-actions">
+          <button id="retroToggleBtn" class="hud-icon-btn retro-toggle-btn" title="Przełącz Tryb Ultra-Retro (Gazeta zamiast Gemini AI)" aria-label="Przełącz Tryb Ultra-Retro">
+            <span id="retroIcon">🕹️</span>
+            <span class="retro-btn-label">RETRO</span>
+          </button>
           <button id="soundToggleBtn" class="hud-icon-btn" title="Wycisz / Włącz dźwięk" aria-label="Włącz lub wyłącz dźwięk">
             <span id="soundIcon">🔊</span>
           </button>
@@ -144,43 +152,69 @@
               </p>
             </div>
 
+            <!-- Wybór trybu: Ultra-Retro vs Nowoczesny -->
+            <div class="retro-mode-toggle-card">
+              <label class="retro-toggle-switch" for="retroModeCheckbox">
+                <input type="checkbox" id="retroModeCheckbox" />
+                <span class="retro-switch-track">
+                  <span class="retro-switch-thumb"></span>
+                </span>
+                <div class="retro-switch-content">
+                  <div class="retro-switch-title">
+                    <span>🕹️ TRYB ULTRA-RETRO (ROCZNIK '96)</span>
+                    <span class="retro-pill-status" id="retroPillStatus">WYŁĄCZONY</span>
+                  </div>
+                  <p class="retro-switch-subtitle" id="retroModeDesc">
+                    Zamiast Gemini AI na mapie pojawia się <strong>Gazeta</strong> – Egzaminator rozkłada prasę i zaczytuje się w felietonie, a studenci mogą bezkarnie ściągać tuż obok niego!
+                  </p>
+                </div>
+              </label>
+            </div>
+
             <div class="legend-grid">
               <h2 class="legend-heading">Legenda i przedmioty do zebrania:</h2>
               <div class="legend-items">
                 <div class="legend-item">
-                  <div class="legend-icon icon-ects">📜</div>
-                  <div class="legend-desc">
-                    <strong>ECTS (+1 punkt):</strong> Zdobądź 30 ECTS, aby wygrać i zaliczyć semestr!
-                  </div>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-icon icon-coffee">☕</div>
-                  <div class="legend-desc">
-                    <strong>Kawa z Patio ALK:</strong> Daje 5 sekund turbo-szybkości i odnawia staminę.
-                  </div>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-icon icon-gemini">💻</div>
-                  <div class="legend-desc">
-                    <strong>Gemini AI:</strong> Cybernetyczny paraliż zamraża profesora na 3.5 sekundy!
-                  </div>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-icon icon-card">🪪</div>
-                  <div class="legend-desc">
-                    <strong>Legitymacja ALK:</strong> Tarcza studencka chroniąca przed 1 złapaniem przez egzaminatora.
-                  </div>
-                </div>
-                <div class="legend-item">
                   <div class="legend-icon icon-student">🎓</div>
                   <div class="legend-desc">
-                    <strong>Sterowanie:</strong> <code>WASD</code> / <code>Strzałki</code>, Sprint: <code>Spacja</code> / <code>Shift</code>.
+                    <strong>Student (Ty):</strong> Steruj za pomocą <code>W, A, S, D</code> lub <code>Strzałek</code>.
                   </div>
                 </div>
                 <div class="legend-item">
                   <div class="legend-icon icon-prof">👨‍🏫</div>
                   <div class="legend-desc">
-                    <strong>Egzaminator:</strong> Ściga z czerwonym długopisem i przyspiesza z każdym ECTS!
+                    <strong>Egzaminator:</strong> Ściga Cię z czerwonym długopisem! Nie daj mu się dotknąć.
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-icon icon-ects">📘</div>
+                  <div class="legend-desc">
+                    <strong>Zaliczenie / Indeks (+1 ECTS):</strong> Zdobądź 30, aby zamknąć semestr.
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-icon icon-coffee">☕</div>
+                  <div class="legend-desc">
+                    <strong>Espresso z Bufetu ALK:</strong> Błyskawicznie odnawia staminę i daje turbodoładowanie!
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-icon icon-thesis">⭐</div>
+                  <div class="legend-desc">
+                    <strong>Złoty Lew Koźmińskiego (+3 ECTS):</strong> Rzadki bonus ukryty na kampusie!
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-icon icon-sprint">⚡</div>
+                  <div class="legend-desc">
+                    <strong>Sprint [SHIFT / Klawisz]:</strong> Zużywa staminę, ale pozwala uciec profesorowi.
+                  </div>
+                </div>
+                <div id="freezeLegendItem" class="legend-item legend-freeze-item">
+                  <div id="freezeLegendIcon" class="legend-icon icon-freeze">📰</div>
+                  <div class="legend-desc" id="freezeLegendDesc">
+                    <strong id="freezeLegendTitle">Gazeta (Ultra-Retro):</strong>
+                    <span id="freezeLegendText">Egzaminator czyta gazetę podczas egzaminu i nie patrzy, jak studenci ściągają!</span>
                   </div>
                 </div>
               </div>
@@ -192,7 +226,7 @@
               <span>🚀 ZACZNIJ SEMESTR (START)</span>
             </button>
             <div class="controls-hint">
-              <span>Sterowanie: Strzałki / WASD &bull; Sprint: Lewy Shift &bull; Pauza: P lub Esc</span>
+              <span>Sterowanie: Strzałki / WASD &bull; Sprint: Lewy Shift &bull; Tryb Retro: R &bull; Pauza: P lub Esc</span>
             </div>
           </div>
         </div>
@@ -283,8 +317,8 @@
 
     </div>
 
-    <!-- 5. Poprawne podpięcie modułu dźwiękowego i silnika gry (ścieżki względne) -->
-    <script src="js/audio.js"></script>
-    <script src="js/game.js"></script>
+    <!-- 5. Poprawne podpięcie modułu dźwiękowego i silnika gry -->
+    <script src="./js/audio.js"></script>
+    <script src="./js/game.js"></script>
   </body>
 </html>
