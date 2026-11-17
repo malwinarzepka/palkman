@@ -1,23 +1,23 @@
 # 🌦️ Raport Aury na Kampusie ALK – Potok GitHub Actions
 
-* **Data aktualizacji:** `2026-11-17 15:11 UTC`
+* **Data aktualizacji:** `2026-11-17 15:13 UTC`
 * **Źródło danych:** `Symulacja manualna (Workflow Dispatch)`
 * **Lokalizacja:** Warszawa, ul. Jagiellońska 57/59 (Kampus ALK)
 
 ## Parametry Aury:
 | Parametr | Wartość |
 | :--- | :--- |
-| **Stan ogólny** | ❄️ Zimowa śnieżyca na Jagiellońskiej (Test CI/CD) (`snow`) |
-| **Temperatura** | **-2.0 °C** |
-| **Wilgotność względna** | 88 % |
-| **Opady** | 2.2 mm |
+| **Stan ogólny** | ☀️ Pełne słońce nad Patio ALK (Test CI/CD) (`sunny`) |
+| **Temperatura** | **24.0 °C** |
+| **Wilgotność względna** | 45 % |
+| **Opady** | 0.0 mm |
 | **Pora doby** | Dzień ☀️ |
 
 ## Wpływ na Rozgrywkę „Kozminski Escape”:
-* **Komunikat Dziekanatu:** *„Zimowa aura na ALK! Prószy śnieg, uważaj na zaspy przy wejściu do Budynku D.”*
-* **Kwestia Profesora:** *„Zaspy śnieżne na Jagiellońskiej, a ja muszę sprawdzić 150 egzaminów!”*
-* **Efekt graficzny:** `snow`
-* **Współczynnik tarcia (poślizg gracza):** `0.85`
+* **Komunikat Dziekanatu:** *„Słoneczna pogoda! ECTS lśnią na Patio, a profesor w dobrym humorze chętnie stawia 5.0!”*
+* **Kwestia Profesora:** *„Piękna pogoda na zaliczenie w pierwszym terminie! Złapmy trochę słońca!”*
+* **Efekt graficzny:** `sunbeams`
+* **Współczynnik tarcia (poślizg gracza):** `0.98`
 
 ---
 *Wygenerowano autonomicznie przez maszynę wykonawczą GitHub Actions Runner.*

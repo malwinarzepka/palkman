@@ -1,20 +1,20 @@
 {
   "city": "Warszawa (Kampus ALK, ul. Jagiellońska)",
   "source": "Symulacja manualna (Workflow Dispatch)",
-  "condition": "snow",
-  "condition_label": "Zimowa śnieżyca na Jagiellońskiej (Test CI/CD)",
-  "icon": "❄️",
-  "temp_c": -2.0,
-  "humidity": 88,
-  "precipitation_mm": 2.2,
+  "condition": "sunny",
+  "condition_label": "Pełne słońce nad Patio ALK (Test CI/CD)",
+  "icon": "☀️",
+  "temp_c": 24.0,
+  "humidity": 45,
+  "precipitation_mm": 0.0,
   "is_day": true,
-  "campus_alert": "Zimowa aura na ALK! Prószy śnieg, uważaj na zaspy przy wejściu do Budynku D.",
+  "campus_alert": "Słoneczna pogoda! ECTS lśnią na Patio, a profesor w dobrym humorze chętnie stawia 5.0!",
   "game_effects": {
-    "theme_class": "weather-snow",
-    "particles": "snow",
-    "player_friction": 0.85,
-    "professor_quote": "Zaspy śnieżne na Jagiellońskiej, a ja muszę sprawdzić 150 egzaminów!",
-    "hud_badge": "❄️ -2.0°C | Zimowa śnieżyca na Jagiellońskiej (Test CI/CD)"
+    "theme_class": "weather-sunny",
+    "particles": "sunbeams",
+    "player_friction": 0.98,
+    "professor_quote": "Piękna pogoda na zaliczenie w pierwszym terminie! Złapmy trochę słońca!",
+    "hud_badge": "☀️ 24.0°C | Pełne słońce nad Patio ALK (Test CI/CD)"
   },
-  "last_updated": "2026-11-17 15:11 UTC"
+  "last_updated": "2026-11-17 15:13 UTC"
 }
