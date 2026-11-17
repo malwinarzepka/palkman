@@ -1,4 +1,4 @@
-// Automatycznie wygenerowane przez potok GitHub Actions (2026-11-17 13:45 UTC)
+// Automatycznie wygenerowane przez potok GitHub Actions (2026-11-17 15:11 UTC)
 window.CAMPUS_WEATHER = {
   "city": "Warszawa (Kampus ALK, ul. Jagiellońska)",
   "source": "Symulacja manualna (Workflow Dispatch)",
@@ -17,5 +17,5 @@ window.CAMPUS_WEATHER = {
     "professor_quote": "Zaspy śnieżne na Jagiellońskiej, a ja muszę sprawdzić 150 egzaminów!",
     "hud_badge": "❄️ -2.0°C | Zimowa śnieżyca na Jagiellońskiej (Test CI/CD)"
   },
-  "last_updated": "2026-11-17 13:45 UTC"
+  "last_updated": "2026-11-17 15:11 UTC"
 };
