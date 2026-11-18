@@ -1,21 +1,21 @@
-// Automatycznie wygenerowane przez potok GitHub Actions (2026-11-18 12:31 UTC)
+// Automatycznie wygenerowane przez potok GitHub Actions (2026-11-18 21:01 UTC)
 window.CAMPUS_WEATHER = {
   "city": "Warszawa (Kampus ALK, ul. Jagiellońska)",
-  "source": "Symulacja manualna (Workflow Dispatch)",
-  "condition": "sunny",
-  "condition_label": "Pełne słońce nad Patio ALK (Test CI/CD)",
-  "icon": "☀️",
-  "temp_c": 24.0,
-  "humidity": 45,
+  "source": "Open-Meteo API (Fallback)",
+  "condition": "night",
+  "condition_label": "Nocna sesja na ALK",
+  "icon": "🌙",
+  "temp_c": 8.8,
+  "humidity": 83,
   "precipitation_mm": 0.0,
-  "is_day": true,
-  "campus_alert": "Słoneczna pogoda! ECTS lśnią na Patio, a profesor w dobrym humorze chętnie stawia 5.0!",
+  "is_day": false,
+  "campus_alert": "Umiarkowane zachmurzenie nad kampusem. Idealne warunki do nauki i ucieczki przed sesją.",
   "game_effects": {
-    "theme_class": "weather-sunny",
-    "particles": "sunbeams",
+    "theme_class": "weather-cloudy",
+    "particles": "none",
     "player_friction": 0.98,
-    "professor_quote": "Piękna pogoda na zaliczenie w pierwszym terminie! Złapmy trochę słońca!",
-    "hud_badge": "☀️ 24.0°C | Pełne słońce nad Patio ALK (Test CI/CD)"
+    "professor_quote": "Gdzie podziały się arkusze z egzaminu z mikroekonomii?!",
+    "hud_badge": "🌙 8.8°C | Nocna sesja na ALK"
   },
-  "last_updated": "2026-11-18 12:31 UTC"
+  "last_updated": "2026-11-18 21:01 UTC"
 };
