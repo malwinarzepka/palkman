@@ -1,23 +1,23 @@
 # 🌦️ Raport Aury na Kampusie ALK – Potok GitHub Actions
 
-* **Data aktualizacji:** `2026-11-21 21:23 UTC`
+* **Data aktualizacji:** `2026-11-22 01:50 UTC`
 * **Źródło danych:** `Open-Meteo API (Fallback)`
 * **Lokalizacja:** Warszawa, ul. Jagiellońska 57/59 (Kampus ALK)
 
 ## Parametry Aury:
 | Parametr | Wartość |
 | :--- | :--- |
-| **Stan ogólny** | 🌙 Nocna sesja na ALK (`night`) |
-| **Temperatura** | **3.5 °C** |
-| **Wilgotność względna** | 88 % |
-| **Opady** | 0.0 mm |
+| **Stan ogólny** | 🌧️ Opady deszczu na Jagiellońskiej (`rain`) |
+| **Temperatura** | **3.7 °C** |
+| **Wilgotność względna** | 90 % |
+| **Opady** | 0.1 mm |
 | **Pora doby** | Noc 🌙 |
 
 ## Wpływ na Rozgrywkę „Kozminski Escape”:
-* **Komunikat Dziekanatu:** *„Umiarkowane zachmurzenie nad kampusem. Idealne warunki do nauki i ucieczki przed sesją.”*
-* **Kwestia Profesora:** *„Gdzie podziały się arkusze z egzaminu z mikroekonomii?!”*
-* **Efekt graficzny:** `none`
-* **Współczynnik tarcia (poślizg gracza):** `0.98`
+* **Komunikat Dziekanatu:** *„Uwaga: Posadzka na Patio jest śliska! Profesor narzeka na zmoknięte arkusze ocen.”*
+* **Kwestia Profesora:** *„Brrr, w taki deszcz moje arkusze ocen zamokną! Panie Kolego, zmykajmy do auli!”*
+* **Efekt graficzny:** `rain`
+* **Współczynnik tarcia (poślizg gracza):** `0.9`
 
 ---
 *Wygenerowano autonomicznie przez maszynę wykonawczą GitHub Actions Runner.*
